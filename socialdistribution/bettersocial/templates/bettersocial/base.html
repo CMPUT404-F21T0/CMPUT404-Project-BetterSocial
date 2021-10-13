@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="CMPUT 404 Group Project">
+
+    <title>BetterSocial</title>
+</head>
+<body>
+<header>
+    <div style="width: 100%; display: table;">
+        <div style="display: table-row; align-content: center;">
+            <div style="display: table-cell; float: left;">
+                <h1><a href="{% url 'bettersocial:index' %}">BetterSocial</a></h1>
+            </div>
+            <div style="display: table-cell; float: right;">
+                {% if user.is_authenticated %}
+                    <a type="button" style="padding: 5pt;" href="{% url 'users:logout' %}">Log Out</a>
+                {% else %}
+                    <a type="button" style="padding: 5pt;" href="{% url 'users:login' %}">Log In</a>
+                    <a type="button" style="padding: 5pt;" href="{% url 'users:register' %}">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+<main>
+    {% block content %}{% endblock %}
+</main>
+<footer>
+</footer>
+</body>
+
+
+</html>
