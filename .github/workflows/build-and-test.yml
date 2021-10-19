@@ -1,0 +1,41 @@
+name: Build and Test
+
+on:
+
+  # Able to run manually
+  workflow_dispatch:
+
+  push:
+    branches:
+      - master
+      - dev
+
+  pull_request:
+    branches:
+      - master
+      - dev
+
+jobs:
+
+  build-and-test:
+    name: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Checks-out the repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v2.2.2
+
+      - name: Install requirements
+        run: pip3 install -r requirements.txt
+
+      - name: Build Project
+        working-directory: ./socialdistribution
+        run: python3 manage.py check
+
+      - name: Test Project
+        working-directory: ./socialdistribution
+        run: python3 manage.py test

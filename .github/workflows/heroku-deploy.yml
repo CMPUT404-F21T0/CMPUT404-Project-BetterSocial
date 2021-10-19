@@ -1,0 +1,53 @@
+name: Deploy to Heroku
+
+on:
+
+  # Able to run manually
+  workflow_dispatch:
+
+  # Runs ONLY when build-and-test succeeds, on master ONLY
+  workflow_run:
+    workflows:
+      - Build and Test
+    branches:
+      - master
+    types:
+      - completed
+
+  # Once more unconditionally on release
+  release:
+    types:
+      - released
+
+jobs:
+
+  heroku-deploy:
+    name: heroku-deploy
+    runs-on: ubuntu-latest
+
+    # Use secrets from this environment
+    environment:
+      name: Heroku
+      url: https://cmput404-bettersocial.herokuapp.com/
+
+    steps:
+
+      # Checks-out the repository under $GITHUB_WORKSPACE
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+
+      # Fails if ANY workflow defined in the 'workflow_run' fails
+      - uses: ahmadnassri/action-workflow-run-wait@v1
+
+      # Actually deploy to Heroku
+      - name: Deploy to Heroku
+        uses: AkhileshNS/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          heroku_app_name: cmput404-bettersocial
+          dontautocreate: true
+
+          # Health check parameters
+          healthcheck: https://cmput404-bettersocial.herokuapp.com/
+          delay: 5
