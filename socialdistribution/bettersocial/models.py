@@ -82,3 +82,40 @@ class Post(models.Model):
         """Gets the Visibility object of the current type (includes both value and label). This exists because the visibility field would only return the value, and you might want the label."""
 
         return Post.Visibility[self.visibility]
+
+class Comment(models.Model):
+    # UUID of the Comment. 
+    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    post_id = models.ForeignKey(Post, on_delete = models.CASCADE)
+    author = models.ForeignKey(Author, on_delete = models.CASCADE)
+    comment = models.CharField(max_length=510)
+    published = models.DateTimeField(auto_now_add = True)
+
+
+class Like(models.Model):
+    # UUID of the Like. 
+    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    post_id = models.ForeignKey(Post, on_delete = models.CASCADE)
+    comment_id = models.ForeignKey(Comment, on_delete = models.CASCADE)
+    author = models.ForeignKey(Author, on_delete = models.CASCADE)
+    comment = models.CharField(max_length=510) # could either be a liked post or liked comment
+    published  = models.DateTimeField(auto_now_add=True)
+
+class Follower(models.Model):
+    # UUID of the Follower.
+    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    author = models.ForeignKey(Author, on_delete = models.CASCADE)
+    follower_list = models.JSONField(default=[])
+    published  = models.DateTimeField(auto_now_add=True)
+
+class Friend(models.Model):
+    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    author = models.ForeignKey(Author, on_delete = models.CASCADE)
+    friends_list = models.JSONField(default=[])
+    published  = models.DateTimeField(auto_now_add=True)
+
+class FriendRequest(models.Model):
+    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    author_sender = models.ForeignKey(Author, on_delete = models.CASCADE, related_name="Sender")
+    author_receiver = models.ForeignKey(Author, on_delete = models.CASCADE, related_name="Receiver")
+    published  = models.DateTimeField(auto_now_add=True)
