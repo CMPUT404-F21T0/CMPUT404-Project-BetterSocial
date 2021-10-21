@@ -13,8 +13,8 @@ class ContentType(models.TextChoices):
     PLAIN = 'text/plain', 'Text'
     MARKDOWN = 'text/markdown', 'Markdown'
     BASE64 = 'application/base64', 'Base64 Encoded'
-    IMAGE_PNG = 'image/png', 'Image (PNG)'
-    IMAGE_JPEG = 'image/jpeg', 'Image (JPEG)'
+    IMAGE_PNG = 'image/png;base64', 'Image (PNG)'
+    IMAGE_JPEG = 'image/jpeg;base64', 'Image (JPEG)'
 
 
 # -- Main Models -- #
