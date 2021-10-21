@@ -38,6 +38,10 @@ class Author(models.Model):
     # Associates a user with the author
     user = models.OneToOneField(User, on_delete = models.CASCADE)
 
+    class Meta:
+        verbose_name = 'Author'
+        verbose_name_plural = 'Authors'
+
 
 class Like(models.Model):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
@@ -47,7 +51,7 @@ class Like(models.Model):
     likeable_models = models.Q(model = 'post') | models.Q(model = 'comment')
 
     # Should ideally be a FK BUT since foreign likes would be stored in this database (i.e. would be POSTed from another server), it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
-    author = models.UUIDField()
+    author_uuid = models.UUIDField()
 
     # Used for determining which object this like belongs to
     dj_object_id = models.PositiveIntegerField()
@@ -64,7 +68,10 @@ class Like(models.Model):
 
     # A user should not be able to like the same object twice
     class Meta:
-        unique_together = ['author', 'dj_object_id', 'dj_content_type']
+        verbose_name = 'Like'
+        verbose_name_plural = 'Likes'
+
+        unique_together = ['author_uuid', 'dj_object_id', 'dj_content_type']
 
 
 class LikedRemote(models.Model):
@@ -74,7 +81,7 @@ class LikedRemote(models.Model):
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # UUID of the object (post/comment) on the remote server. Is a weak FK relationship because we don't store remote data for the most part
-    uuid_object = models.UUIDField()
+    object_uuid = models.UUIDField()
 
     # Used for determining which object this like belongs to. We don't need a GenericForeignKey relationship, because it would not actually resolve to an object, but we still want to know the type that the like belongs to.
     dj_content_type = models.ForeignKey(
@@ -85,14 +92,17 @@ class LikedRemote(models.Model):
 
     # A user should not be able to like the same object twice
     class Meta:
-        unique_together = ['author', 'uuid_object']
+        verbose_name = 'Remote Like'
+        verbose_name_plural = 'Remote Likes'
+
+        unique_together = ['author', 'object_uuid']
 
 
 class Likeable(models.Model):
     """Abstract object that can be liked. The point of this is to define the reverse relationship below."""
 
     # Defines the reverse of the relationship so any likeable model can go .objects.likes.all() or something similar
-    likes = GenericRelation(Like, object_id_field = 'dj_object_id', content_type_field = 'dj_content_type')
+    like_set = GenericRelation(Like, object_id_field = 'dj_object_id', content_type_field = 'dj_content_type')
 
     class Meta:
         abstract = True
@@ -106,11 +116,15 @@ class Post(Likeable):
     class Visibility(models.TextChoices):
         PUBLIC = 'PUBLIC', 'Public'
         FRIENDS = 'FRIENDS', 'Friends'
+        PRIVATE = 'PRIVATE', 'Private to Author (DM)'
 
     # UUID of the POST. Like Author, it's not the PK but it is unique.
     uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
 
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
+
+    # Used to determine which author UUID the author of this post wants to send this post to. Does not mean anything unless the visibility is PRIVATE.
+    recipient_uuid = models.UUIDField(null = True)
 
     # Soft enum type, enforced in Django, not database level
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
@@ -125,10 +139,15 @@ class Post(Likeable):
     # Soft enum type, enforced in Django, not database level
     visibility = models.CharField(max_length = 32, choices = Visibility.choices, default = Visibility.PUBLIC)
 
+    # Does not mean anything UNLESS the visibility is private. Image only posts should ALWAYS have this set to true
     unlisted = models.BooleanField(default = False)
 
     # Automatically sets the time to now on add and does not allow updates to it -- https://docs.djangoproject.com/en/3.2/ref/models/fields/#django.db.models.DateField.auto_now_add
     published = models.DateTimeField(auto_now_add = True)
+
+    class Meta:
+        verbose_name = 'Post'
+        verbose_name_plural = 'Posts'
 
     def get_content_type(self) -> ContentType:
         """Gets the ContentType object of the current type (includes both value and label). This exists because the content_type field would only return the value, and you might want the label."""
@@ -153,13 +172,22 @@ class Comment(Likeable):
     post = models.ForeignKey(Post, on_delete = models.CASCADE)
 
     # Should ideally be a FK BUT since foreign comments would be stored in this database (i.e. would be POSTed from another server), it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
-    author = models.UUIDField()
+    author_uuid = models.UUIDField()
 
     # Reuse the same choices as post. Although TODO: 2021-10-21 image types may be rejected, that is TBD
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
     comment = models.TextField()
 
     published = models.DateTimeField(auto_now_add = True)
+
+    class Meta:
+        verbose_name = 'Comment'
+        verbose_name_plural = 'Comments'
+
+    def get_content_type(self) -> ContentType:
+        """Gets the ContentType object of the current type (includes both value and label). This exists because the content_type field would only return the value, and you might want the label."""
+
+        return ContentType[self.content_type]
 
 
 class Follower(models.Model):
@@ -168,11 +196,14 @@ class Follower(models.Model):
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Should ideally be a FK BUT since foreign follows would be stored in this database, it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
-    follower = models.UUIDField()
+    follower_uuid = models.UUIDField()
 
     # A user may not be followed by the same person twice
     class Meta:
-        unique_together = ['author', 'follower']
+        verbose_name = 'Follower'
+        verbose_name_plural = 'Followers'
+
+        unique_together = ['author', 'follower_uuid']
 
 
 class Following(models.Model):
@@ -181,11 +212,14 @@ class Following(models.Model):
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Should ideally be a FK BUT since foreign follows would be stored in this database, it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
-    following = models.UUIDField()
+    following_uuid = models.UUIDField()
 
     # A user may not follow by the same person twice
     class Meta:
-        unique_together = ['author', 'following']
+        verbose_name = 'Following'
+        verbose_name_plural = 'Following'
+
+        unique_together = ['author', 'following_uuid']
 
 
 class Inbox(models.Model):
@@ -193,9 +227,20 @@ class Inbox(models.Model):
 
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
+    # Used for determining which object this row stores. We don't need a GenericForeignKey relationship, because it would not actually resolve to an object, but we still want to know the type.
+    dj_content_type = models.ForeignKey(
+        DjangoContentType,
+        limit_choices_to = models.Q(model = 'post') | models.Q(model = 'like') | models.Q(model = 'follower'),
+        on_delete = models.CASCADE
+    )
+
     # TODO: 2021-10-21 add proper validator
     # A minimal or full representation of the object. This object always exists elsewhere, this is effectively a reference to it, as the various fields in here would allow it to point to the right object.
     object = models.JSONField(default = dict)
+
+    class Meta:
+        verbose_name = 'Inbox'
+        verbose_name_plural = 'Inbox'
 
 
 # -- Utility -- #
@@ -216,6 +261,10 @@ class Node(models.Model):
     # Auth used to connect to THEIR server
     node_username = models.CharField(max_length = 255)
     node_password = models.CharField(max_length = 255)
+
+    class Meta:
+        verbose_name = 'Node'
+        verbose_name_plural = 'Nodes'
 
 
 class UUIDRemoteCache(models.Model):
@@ -240,4 +289,7 @@ class UUIDRemoteCache(models.Model):
 
     # Make this behave like a dict
     class Meta:
+        verbose_name = 'UUID Remote Cache'
+        verbose_name_plural = 'UUID Remote Cache'
+
         unique_together = ['uuid', 'dj_content_type']
