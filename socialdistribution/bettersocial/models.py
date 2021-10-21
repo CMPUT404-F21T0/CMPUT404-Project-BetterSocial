@@ -30,9 +30,6 @@ class Author(models.Model):
     # Importantly, not the primary key of the table. This is so we can be consistent
     uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
 
-    # Null means that it's the current host
-    host = models.CharField(max_length = 255, null = True)
-
     github_url = models.CharField(max_length = 255, null = True)
 
     # TODO: 2021-10-19 Deal with images
@@ -70,7 +67,7 @@ class Like(models.Model):
         unique_together = ['author', 'dj_object_id', 'dj_content_type']
 
 
-class Liked(models.Model):
+class LikedRemote(models.Model):
     """Represents a like that a LOCAL user made to a remote location. Mostly used as a cache of sorts, because otherwise, we would have no record of the user's like after we send the POST to the remote server."""
 
     # This is always a like from local to remote, so it is necessarily dependent on local author. Local to local or remote to local should be queryable via Like
