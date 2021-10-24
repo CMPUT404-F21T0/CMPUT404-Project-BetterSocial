@@ -126,6 +126,12 @@ class Post(Likeable):
     # Used to determine which author UUID the author of this post wants to send this post to. Does not mean anything unless the visibility is PRIVATE.
     recipient_uuid = models.UUIDField(null = True)
 
+    # Source URL of reshared posts. When WE write to the database, this should be set to the host of the post that we reshared.
+    source = models.CharField(max_length = 255, null = True)
+
+    # Origin URL of reshared posts. When WE write to the database, this should be set to whatever the origin
+    origin = models.CharField(max_length = 255, null = True)
+
     # Soft enum type, enforced in Django, not database level
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
 
