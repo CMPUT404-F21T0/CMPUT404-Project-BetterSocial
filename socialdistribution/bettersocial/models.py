@@ -41,6 +41,10 @@ class Author(models.Model):
         verbose_name = 'Author'
         verbose_name_plural = 'Authors'
 
+    @property
+    def display_name(self) -> str:
+        return f'{self.user.first_name} {self.user.last_name}'
+
 
 class Like(models.Model):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
