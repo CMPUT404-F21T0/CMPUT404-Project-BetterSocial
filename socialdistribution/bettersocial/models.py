@@ -23,12 +23,11 @@ class ContentType(models.TextChoices):
 class Author(models.Model):
     """AKA the profile of a user"""
 
-    type = "Author"
-
     # Note: Registered as part of User
 
-    # Importantly, not the primary key of the table. This is so we can be consistent
-    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    type = "Author"
+
+    uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     github_url = models.CharField(max_length = 255, null = True)
 
@@ -54,7 +53,7 @@ class Like(models.Model):
     author_uuid = models.UUIDField()
 
     # Used for determining which object this like belongs to
-    dj_object_id = models.PositiveIntegerField()
+    dj_object_uuid = models.UUIDField()
     dj_content_type = models.ForeignKey(
         DjangoContentType,
 
@@ -64,14 +63,14 @@ class Like(models.Model):
         on_delete = models.CASCADE
     )
 
-    object = GenericForeignKey('dj_content_type', 'dj_object_id')
+    object = GenericForeignKey('dj_content_type', 'dj_object_uuid')
 
     # A user should not be able to like the same object twice
     class Meta:
         verbose_name = 'Like'
         verbose_name_plural = 'Likes'
 
-        unique_together = ['author_uuid', 'dj_object_id', 'dj_content_type']
+        unique_together = ['author_uuid', 'dj_object_uuid', 'dj_content_type']
 
 
 class LikedRemote(models.Model):
@@ -118,8 +117,8 @@ class Post(Likeable):
         FRIENDS = 'FRIENDS', 'Friends'
         PRIVATE = 'PRIVATE', 'Private to Author (DM)'
 
-    # UUID of the POST. Like Author, it's not the PK but it is unique.
-    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    # UUID of the Post object
+    uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
@@ -171,8 +170,8 @@ class Comment(Likeable):
 
     type = "Comment"
 
-    # UUID of the COMMENT. Like Author, it's not the PK but it is unique.
-    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    # UUID of the Comment object
+    uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     # Comment belongs to a post
     post = models.ForeignKey(Post, on_delete = models.CASCADE)
