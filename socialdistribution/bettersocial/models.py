@@ -1,4 +1,5 @@
 import uuid as uuid
+from typing import Optional
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -75,6 +76,15 @@ class Like(models.Model):
         verbose_name_plural = 'Likes'
 
         unique_together = ['author_uuid', 'dj_object_uuid', 'dj_content_type']
+
+    @property
+    def author_local(self) -> Optional[Author]:
+        """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
+
+        try:
+            return Author.objects.get(uuid = self.author_uuid)
+        except Author.DoesNotExist as e:
+            raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
 
 
 class LikedRemote(models.Model):

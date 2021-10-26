@@ -153,7 +153,7 @@ class BaseLikeSerializer(serializers.ModelSerializer):
     # TODO: 2021-10-25 refactor later for remote authors
     @staticmethod
     def helper_get_author(instance: Like) -> Author:
-        return Author.objects.filter(uuid = instance.author_uuid).first()
+        return instance.author_local
 
     def get_summary(self, instance: Like):
         return f'{self.helper_get_author(instance).display_name} Likes your post'
