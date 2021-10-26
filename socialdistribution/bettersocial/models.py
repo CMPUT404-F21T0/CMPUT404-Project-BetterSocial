@@ -1,4 +1,5 @@
 import uuid as uuid
+from typing import Optional
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -23,12 +24,11 @@ class ContentType(models.TextChoices):
 class Author(models.Model):
     """AKA the profile of a user"""
 
-    type = "Author"
-
     # Note: Registered as part of User
 
-    # Importantly, not the primary key of the table. This is so we can be consistent
-    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    type = "Author"
+
+    uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     github_url = models.CharField(max_length = 255, null = True)
 
@@ -42,6 +42,10 @@ class Author(models.Model):
         verbose_name = 'Author'
         verbose_name_plural = 'Authors'
 
+    @property
+    def display_name(self) -> str:
+        return f'{self.user.first_name} {self.user.last_name}'
+
 
 class Like(models.Model):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
@@ -54,7 +58,7 @@ class Like(models.Model):
     author_uuid = models.UUIDField()
 
     # Used for determining which object this like belongs to
-    dj_object_id = models.PositiveIntegerField()
+    dj_object_uuid = models.UUIDField()
     dj_content_type = models.ForeignKey(
         DjangoContentType,
 
@@ -64,14 +68,23 @@ class Like(models.Model):
         on_delete = models.CASCADE
     )
 
-    object = GenericForeignKey('dj_content_type', 'dj_object_id')
+    object = GenericForeignKey('dj_content_type', 'dj_object_uuid')
 
     # A user should not be able to like the same object twice
     class Meta:
         verbose_name = 'Like'
         verbose_name_plural = 'Likes'
 
-        unique_together = ['author_uuid', 'dj_object_id', 'dj_content_type']
+        unique_together = ['author_uuid', 'dj_object_uuid', 'dj_content_type']
+
+    @property
+    def author_local(self) -> Optional[Author]:
+        """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
+
+        try:
+            return Author.objects.get(uuid = self.author_uuid)
+        except Author.DoesNotExist as e:
+            raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
 
 
 class LikedRemote(models.Model):
@@ -118,8 +131,8 @@ class Post(Likeable):
         FRIENDS = 'FRIENDS', 'Friends'
         PRIVATE = 'PRIVATE', 'Private to Author (DM)'
 
-    # UUID of the POST. Like Author, it's not the PK but it is unique.
-    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    # UUID of the Post object
+    uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
@@ -171,8 +184,8 @@ class Comment(Likeable):
 
     type = "Comment"
 
-    # UUID of the COMMENT. Like Author, it's not the PK but it is unique.
-    uuid = models.UUIDField(unique = True, default = uuid.uuid4, editable = False)
+    # UUID of the Comment object
+    uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     # Comment belongs to a post
     post = models.ForeignKey(Post, on_delete = models.CASCADE)
