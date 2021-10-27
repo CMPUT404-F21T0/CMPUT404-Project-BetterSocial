@@ -163,6 +163,21 @@ class Post(Likeable):
     # Automatically sets the time to now on add and does not allow updates to it -- https://docs.djangoproject.com/en/3.2/ref/models/fields/#django.db.models.DateField.auto_now_add
     published = models.DateTimeField(auto_now_add = True)
 
+    class Meta:
+        verbose_name = 'Post'
+        verbose_name_plural = 'Posts'
+
+    def get_content_type(self) -> ContentType:
+        """Gets the ContentType object of the current type (includes both value and label). This exists because the content_type field would only return the value, and you might want the label."""
+
+        return ContentType[self.content_type]
+
+    def get_visibility(self) -> Visibility:
+        """Gets the Visibility object of the current type (includes both value and label). This exists because the visibility field would only return the value, and you might want the label."""
+
+        return Post.Visibility[self.visibility]
+
+
 
 
 class Comment(Likeable):

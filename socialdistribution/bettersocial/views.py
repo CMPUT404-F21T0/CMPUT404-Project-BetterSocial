@@ -18,6 +18,8 @@ class IndexView(generic.base.TemplateView):
 class ProfileView(generic.base.TemplateView):
     template_name = 'bettersocial/profile.html'
 
+
+
 @method_decorator(login_required, name = 'dispatch')
 class AddPostView(generic.CreateView):
     model = Post
@@ -30,7 +32,7 @@ class AddPostView(generic.CreateView):
         form = PostCreationForm(request.POST)
 
         obj = form.save(commit = False)
-        obj.author = Author(self.request.user.author.uuid, self.request.user)   # Automatically Put the current user as the author
+        obj.author = Author(self.request.user.author.uuid, self.request.user)       # Automatically Put the current user as the author
         obj.save()
 
         return render(request, 'bettersocial/profile.html', {'user': request.user}) # Going back to the profile page / home page currently
