@@ -38,7 +38,3 @@ class StreamView(generic.ListView):
             (Q(visibility = Post.Visibility.PUBLIC)) | 
             (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author) & Q(author__following__following_uuid = author)) | 
             (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author))).order_by('-published')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context

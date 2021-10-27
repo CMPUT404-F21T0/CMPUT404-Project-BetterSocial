@@ -1,4 +1,6 @@
-{% extends 'bettersocial/base.html' %} {% block content %} {% if inbox_items %}
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+{% if inbox_items %}
 <div
 	class="inbox"
 	style="height: 0; display: flex; flex-direction: column; overflow: hidden"
@@ -11,4 +13,5 @@
 </div>
 {% else %}
 <p>No posts in inbox./</p>
-{% endif %} {% endblock %}
+{% endif %}
+{% endblock %}
