@@ -1,4 +1,5 @@
-import uuid as uuid
+import uuid
+from uuid import UUID
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -55,6 +56,9 @@ class Author(models.Model):
     @property
     def display_name(self) -> str:
         return f'{self.user.first_name} {self.user.last_name}'
+
+    def friends_with(self, author_uuid: UUID) -> bool:
+        return self.following_set.filter(following_uuid = author_uuid).exists() and self.follower_set.filter(follower_uuid = author_uuid).exists()
 
 
 class Like(models.Model, LocalAuthorMixin):
@@ -242,6 +246,7 @@ class Following(models.Model):
         unique_together = ['author', 'following_uuid']
 
 
+# TODO: 2021-10-26 rename model to be clearer
 class Inbox(models.Model):
     """Each row represents an object that is SENT to the user's inbox."""
 
