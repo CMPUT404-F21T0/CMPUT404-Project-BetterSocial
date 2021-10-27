@@ -15,6 +15,7 @@
             </div>
             <div style="display: table-cell; float: right;">
                 {% if user.is_authenticated %}
+                    <a type="button" style="padding: 5pt;" href="{% url 'bettersocial:post' %}">Make Post</a>
                     <a type="button" style="padding: 5pt;" href="{% url 'users:logout' %}">Log Out</a>
                 {% else %}
                     <a type="button" style="padding: 5pt;" href="{% url 'users:login' %}">Log In</a>
