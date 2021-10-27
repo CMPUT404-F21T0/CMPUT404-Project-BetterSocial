@@ -255,7 +255,7 @@ class Inbox(models.Model):
 
     # TODO: 2021-10-21 add proper validator
     # A minimal or full representation of the object. This object always exists elsewhere, this is effectively a reference to it, as the various fields in here would allow it to point to the right object.
-    object = models.JSONField(default = dict)
+    inbox_object = models.JSONField(default = dict)
 
     class Meta:
         verbose_name = 'Inbox'
