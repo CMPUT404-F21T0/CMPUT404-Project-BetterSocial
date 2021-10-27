@@ -33,8 +33,8 @@ class StreamView(generic.ListView):
     
     def get_queryset(self):
         """Return all post objects."""
-        author = self.request.user.author.uuid
+        author_uuid = self.request.user.author.uuid
         return Post.objects.filter(
             (Q(visibility = Post.Visibility.PUBLIC)) | 
-            (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author) & Q(author__following__following_uuid = author)) | 
-            (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author))).order_by('-published')
+            (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author_uuid) & Q(author__following__following_uuid = author_uuid)) | 
+            (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author_uuid))).order_by('-published')
