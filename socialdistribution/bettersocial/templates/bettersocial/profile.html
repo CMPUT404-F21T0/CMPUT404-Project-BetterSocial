@@ -1,14 +1,13 @@
-{% extends 'bettersocial/base.html' %}
-{% block content %}
+{% extends 'bettersocial/base.html' %} {% block content %}
 
-    <h2>Profile Stub!</h2>
-    <table>
-        <tr>
-            <td><b>Username:</b> {{ user.username }}</td>
-        </tr>
-        <tr>
-            <td><b>Full Name:</b> {{ user.first_name }} {{ user.last_name }}</td>
-        </tr>
-    </table>
+<h2>Profile Stub!</h2>
+<table>
+	<tr>
+		<td><b>Username:</b> {{ user.username }}</td>
+	</tr>
+	<tr>
+		<td><b>Full Name:</b> {{ user.first_name }} {{ user.last_name }}</td>
+	</tr>
+</table>
 
 {% endblock %}
