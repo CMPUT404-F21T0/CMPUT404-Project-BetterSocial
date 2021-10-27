@@ -3,7 +3,6 @@
 {% load static %}
 <!-- Style Sheet and References -->
 <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}">
-<script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
 
     {% for user in view.users %}
         <div class="post">
@@ -28,15 +27,30 @@
                 </div>
             </div>
 
+            <!-- TODO: add logic for type of post -->
             <div class="post-container">
                 content
             </div>
 
             <div class="post-footer right">
-                <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
-                <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
-                <span class="iconify" data-icon="ant-design:comment-outlined" data-width="30" data-height="30"></span>
-            </div>
+                <!-- TODO: Edit href for share post -->
+                <a href="">
+                    <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
+                </a>
+            <a class="icon-text" href="">Share Post</a>
+                <!-- TODO: Edit href for share likes and dynamically add number of likes -->
+                <!-- TODO: Pluralize likes  -->
+                <a href="">
+                    <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
+                </a>
+            <a class="icon-text" href="">Likes</a>
+                <!-- TODO: Edit href for comments and dynamically add number of comments -->
+                <!-- TODO: Pluralize comments  -->
+                <a href="">
+                    <span class="iconify" data-icon="ant-design:comment-outlined" data-width="30" data-height="30"></span>
+                </a>
+            <a class="icon-text" href="">Comments</a>
+        </div>
 
         </div>
     {% endfor %}

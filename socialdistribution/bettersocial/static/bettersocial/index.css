@@ -15,10 +15,19 @@ p {
 }
 
 .post-container {
+    display: block;
     border: 1px rgb(64, 64, 64);
     border-style: solid none;
     min-height: 600px;
 
+}
+
+.post-footer .icon-text {
+    margin-bottom: 6px;
+   }
+
+.post-footer .right {
+    gap: 10px;
 }
 
 .post-header {
@@ -40,9 +49,8 @@ p {
     align-items: flex-end;
     display: flex;
     flex-direction: row;
-    gap: 20px;
+    gap: 10px;
     justify-content: flex-end;
     margin: 10px;
     height: 50px;
 }
-
