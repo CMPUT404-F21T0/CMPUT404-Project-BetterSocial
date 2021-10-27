@@ -17,7 +17,7 @@ class LikeModelTests(TestCase):
         self.comment_like: Like = utils.create_test_like(author_uuid = self.author.uuid, liked_object = self.comment)
 
     def test_delete_cascade(self):
-        """Tests that the author object is deleted when the associated user is deleted"""
+        """Tests that the like object is deleted when the associated likeable object is deleted"""
 
         # Save comment and post id to local var because it will be inaccessible after the delete
         comment_like_id = self.comment_like.id
