@@ -8,7 +8,6 @@
     {% for user in view.users %}
         <div class="post">
             <div class="post-header">
-
                 <!-- TODO: add if user has profile pic show pic if not show icon -->
                 <!-- TODO: should change href to user profile link -->
                 <div class="left">
@@ -16,7 +15,9 @@
                         <span class="iconify" data-icon="iconoir:profile-circled" data-width="42" data-height="42"></span>
                     </a>
                     <!-- TODO: should change href to user profile link -->
-                    <a href="{% url 'bettersocial:profile' %}"><h3>{{ user.username }}</h3></a>
+                    <a href="{% url 'bettersocial:profile' %}">
+                        <h3>{{ user.username }}</h3>
+                    </a>
                 </div>
 
                 <!-- TODO: change the time to be dynamically added -->
@@ -26,10 +27,11 @@
                     <a href="">http://webapp.herokuapp.com/</a>
                 </div>
             </div>
+
             <div class="post-container">
                 content
             </div>
-            
+
             <div class="post-footer right">
                 <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
                 <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
@@ -37,11 +39,5 @@
             </div>
 
         </div>
-
-
-
-        <p>{{ object.username }}</p> asdas
     {% endfor %}
-
-
 {% endblock %}

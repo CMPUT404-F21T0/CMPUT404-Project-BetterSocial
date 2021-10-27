@@ -6,8 +6,8 @@ a {
 
 body{
     margin: 0;
-    padding: 0;
     overflow-x: hidden;
+    padding: 0;
 
 }
 
@@ -23,16 +23,15 @@ header {
     background-color: rgba(228, 223, 223, 0.721);
     border: 1px solid rgb(64, 64, 64);
     height: 55px;
+    margin-bottom: 25px;
     overflow: hidden;
     width: 100%;
-    margin-bottom: 25px;
 }
 
 .left {
     display: flex;
     flex-direction: row;
     float: left;
-    /* border: 1px solid blue; */
     margin-bottom: 0px;
     margin-top: 5px;
     margin-left: 25px;
