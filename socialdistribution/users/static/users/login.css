@@ -1,0 +1,54 @@
+/* same css is used for register.html */
+
+.login{
+    display: block;
+    border: 1px solid rgb(64, 64, 64);
+    margin-top: 65px;
+    margin-right: auto;
+    margin-left: auto;
+    width: 500px;
+    height: 420px;
+}
+
+.login-header {
+    border: 1px solid rgb(64, 64, 64);
+    background-color: rgba(228, 223, 223, 0.721);
+    color: rgb(64, 64, 64);
+    text-align: center;
+    height: 140px;
+    line-height: 110px;
+    width: 450px;
+    margin-top: 25px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.login-form {
+    margin-right: auto;
+    margin-left: auto;
+    width: 450px;
+    margin-top: 25px;
+}
+
+
+
+table {
+    margin: 0 auto;
+}
+
+.submit-box {
+    margin: 0 auto;
+    display: block;
+    margin-top: 25px;
+    width: 232px;
+
+}
+
+.login-button {
+    margin-left: 50px;
+}
+
+.register-box {
+    float: right;
+    margin-right: 71px;
+}

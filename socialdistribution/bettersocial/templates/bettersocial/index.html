@@ -1,6 +1,47 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
+{% load static %}
+<!-- Style Sheet and References -->
+<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}">
+<script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
 
-    <h2>Index Stub!</h2>
+    {% for user in view.users %}
+        <div class="post">
+            <div class="post-header">
+
+                <!-- TODO: add if user has profile pic show pic if not show icon -->
+                <!-- TODO: should change href to user profile link -->
+                <div class="left">
+                    <a href="{% url 'bettersocial:profile' %}">
+                        <span class="iconify" data-icon="iconoir:profile-circled" data-width="42" data-height="42"></span>
+                    </a>
+                    <!-- TODO: should change href to user profile link -->
+                    <a href="{% url 'bettersocial:profile' %}"><h3>{{ user.username }}</h3></a>
+                </div>
+
+                <!-- TODO: change the time to be dynamically added -->
+                <!-- TODO: change the link to be dynamically added and href -->
+                <div class="right">
+                    <p>4 mins ago...</p>
+                    <a href="">http://webapp.herokuapp.com/</a>
+                </div>
+            </div>
+            <div class="post-container">
+                content
+            </div>
+            
+            <div class="post-footer right">
+                <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
+                <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
+                <span class="iconify" data-icon="ant-design:comment-outlined" data-width="30" data-height="30"></span>
+            </div>
+
+        </div>
+
+
+
+        <p>{{ object.username }}</p> asdas
+    {% endfor %}
+
 
 {% endblock %}
