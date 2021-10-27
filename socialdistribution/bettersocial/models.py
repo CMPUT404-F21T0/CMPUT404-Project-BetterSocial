@@ -120,7 +120,7 @@ class Likeable(models.Model):
     """Abstract object that can be liked. The point of this is to define the reverse relationship below."""
 
     # Defines the reverse of the relationship so any likeable model can go .objects.likes.all() or something similar
-    like_set = GenericRelation(Like, object_id_field = 'dj_object_id', content_type_field = 'dj_content_type')
+    like_set = GenericRelation(Like, object_id_field = 'dj_object_uuid', content_type_field = 'dj_content_type')
 
     class Meta:
         abstract = True
