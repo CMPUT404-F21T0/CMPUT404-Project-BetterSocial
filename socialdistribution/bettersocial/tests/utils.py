@@ -1,8 +1,9 @@
-from typing import Union, Dict
+from typing import Union, Dict, Type
 from uuid import UUID
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
+from django.db import models
 
 from bettersocial.models import Author, Post, Comment, Like, LikedRemote, Follower, Following, Inbox
 
@@ -43,14 +44,16 @@ def create_test_like(
 def create_test_liked_remote(
         author: Author,
         object_uuid: UUID,
+        model_type: Type[models.Model]
 ):
     """
     Creates a test LikeRemote object with some reasonable defaults
     """
 
-    return LikedRemote(
+    return LikedRemote.objects.create(
         author = author,
         object_uuid = object_uuid,
+        dj_content_type = DjangoContentType.objects.get_for_model(model = model_type),
     )
 
 
