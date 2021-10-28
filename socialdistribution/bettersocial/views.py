@@ -62,17 +62,27 @@ class AddCommentView(generic.CreateView):
     model = Comment
     form_class = CommentCreationForm    
     template_name = 'bettersocial/add_comment.html'
-    #success_url = reverse_lazy('bettersocial:index')
+    success_url = reverse_lazy('bettersocial:index')
+
+    # Presets the author uuid to the currently logged in user
+    # https://stackoverflow.com/questions/54153528/how-to-populate-existing-html-form-with-django-updateview
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['author_uuid'] = self.request.user.author.uuid
+        initial['author_username'] = self.request.user.author.user
+        return initial
 
     # Injections the proper post id for the comment
     def form_valid (self, form):
         form.instance.post_id = self.kwargs['pk']
-        form.instance.author_uuid = self.request.user.author.uuid
+        '''
+        form = CommentCreationForm(initial={'author_uuid': self.request.user.author.uuid})
+        '''
         return super().form_valid(form)
     
     def get_success_url(self):
         return reverse_lazy('bettersocial:article_details', kwargs={'pk': self.kwargs['pk']})
-
+    
 
 
         

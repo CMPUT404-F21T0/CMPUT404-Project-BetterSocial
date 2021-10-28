@@ -18,4 +18,5 @@ class CommentCreationForm(ModelForm):
 
         # Fields can be added
         fields = ['author_uuid',
+                  'author_username',
                   'comment']

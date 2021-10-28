@@ -18,7 +18,7 @@
         <br/>
         <br/>
         {% for comment in post.comments.all %}
-            <strong>{{ comment.author_uuid }} -  {{ comment.published }}</strong>
+            <strong>{{ comment.author_username }} -  {{ comment.published }}</strong>
             <br/>
             {{ comment.comment }}
             <hr/>

@@ -183,12 +183,14 @@ class Comment(models.Model):
 
     # Should ideally be a FK BUT since foreign comments would be stored in this database (i.e. would be POSTed from another server), it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
     author_uuid = models.UUIDField() #models.ForeignKey(Author, default=None, on_delete = models.CASCADE) #
- 
+
     # Reuse the same choices as post. Although TODO: 2021-10-21 image types may be rejected, that is TBD
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
     comment = models.TextField()
 
     published = models.DateTimeField(auto_now_add = True)
+
+    author_username = models.CharField(max_length = 32, null = True)
 
     class Meta:
         verbose_name = 'Comment'
@@ -201,7 +203,7 @@ class Comment(models.Model):
 
     def __str__(self):
         #author = Author.objects.get(uuid=self.author_uuid)
-        return str(self.post.title) + ' | ' + str(self.author_uuid) + ' | ' + str(self.author_uuid)
+        return str(self.post.title) + ' | ' + str(self.author_username) 
 
 class Follower(models.Model):
     """Represents a single follow from SOME user (local or remote) to OUR user (local). A bidirectional relationship on Follower/Following implies friendship. IFF there is an entry in this table and NOT Following, this counts as a friend "request". An author would "approve" a friend request by following the author back, which would make an entry in the Following table."""
