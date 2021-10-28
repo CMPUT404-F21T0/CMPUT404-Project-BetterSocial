@@ -32,7 +32,7 @@
                 {{ post.content|slice:":100" }}
                 </br></br>
                 {% if post.header_image %}
-                    <img src="{{ post.header_image.url }}" width='600' height='600'>
+                    <img src="{{ post.header_image.url }}" width='600' height='400'>
                 {% endif %}
             </div>
 
@@ -64,7 +64,6 @@
                 </a>
             <a class="icon-text" href="">Comments</a>
         </div>
-
-        </div>
+    </div>
     {% endfor %}
 {% endblock %}

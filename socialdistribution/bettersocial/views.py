@@ -49,6 +49,7 @@ class AddPostView(generic.CreateView):
     form_class = PostCreationForm
     template_name = 'bettersocial/postapost.html'
 
+    # Changes require in the future
     # The form itself has error message for the user if he / she does it incorrectly.
     def post(self, request):
         form = PostCreationForm(request.POST, request.FILES)

@@ -123,7 +123,7 @@ class Likeable(models.Model):
         abstract = True
 
 
-class Post(models.Model):
+class Post(Likeable):
     """Represents a post made by a user. Can have multiple types and has visibility settings"""
 
     type = "Post"
