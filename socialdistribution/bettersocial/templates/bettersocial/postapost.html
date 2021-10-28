@@ -1,32 +1,57 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
+{% load static %}
 
-    <h1>Post a Post</h1>
+<!-- Style Sheet and References -->
+<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/postapost.css' %}">
 
+<h1>Post a Post</h1>
+
+</br></br>
+
+<!-- Temporary HTML / CSS -->
+<div class="container"></div>
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        <!-- Fields can be expanded -->
-        <table>
-            <tr>
-                <td>{{ form.title.label_tag }}</td>
-                <td>{{ form.title }}</td>
-            </tr>
-            <tr>
-                <td>{{ form.content.label_tag }}</td>
-                <td>{{ form.content }}</td>
-            </tr>
-            <tr>
-                <td>{{ form.visibility.label_tag }}</td>
-                <td>{{ form.visibility }}</td>
-            </tr>
-            <tr>
-                <td>{{ form.header_image.label_tag }}</td>
-                <td>{{ form.header_image }}</td>
-            </tr>
-        </table>
+        <div class="row">
+            <div class="size-25">
+                {{ form.title.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.title }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.content.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.content }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.visibility.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.visibility }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.header_image.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.header_image}}
+            </div>
+        </div>
 
         </br></br>
         <a href="{% url 'bettersocial:index' %}"><button>Post</button></a>
     </form>
+</div>
 
 {% endblock %}

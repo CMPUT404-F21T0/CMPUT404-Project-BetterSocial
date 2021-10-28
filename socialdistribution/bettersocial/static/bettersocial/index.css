@@ -16,6 +16,7 @@ p {
 
 .post-container {
     display: block;
+    padding: 10px;
     border: 1px rgb(64, 64, 64);
     border-style: solid none;
     min-height: 600px;

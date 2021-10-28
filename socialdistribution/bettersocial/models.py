@@ -166,6 +166,18 @@ class Post(models.Model):
     # Automatically sets the time to now on add and does not allow updates to it -- https://docs.djangoproject.com/en/3.2/ref/models/fields/#django.db.models.DateField.auto_now_add
     published = models.DateTimeField(auto_now_add = True)
 
+    class Meta:
+        verbose_name='Post'
+        verbose_name_plural = 'Posts'
+
+    def get_content_type(self) -> ContentType:
+        """Gets the ContentType object of the current type."""
+        return ContentType[self.content_type]
+
+    def get_visibility(self) -> Visibility:
+        """Gets the Visibility object of the current type """
+        return Post.Visibility[self.visibility]
+
     def __str__(self):
         return self.title + ' | ' + str(self.author.user)
 
