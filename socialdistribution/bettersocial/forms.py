@@ -6,17 +6,18 @@ class PostCreationForm(ModelForm):
     class Meta:
         model = Post
 
-        # Fields can be added
+        # More fields can be added
         fields = ['title',
                   'content', 
-                  'visibility']
+                  'visibility',
+                  'header_image']
 
 class CommentCreationForm(ModelForm):
 
     class Meta:
         model = Comment
 
-        # Fields can be added
+        # More fields can be added
         fields = ['author_uuid',
                   'author_username',
                   'comment']

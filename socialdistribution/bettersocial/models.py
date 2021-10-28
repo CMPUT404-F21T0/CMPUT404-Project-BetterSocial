@@ -151,8 +151,9 @@ class Post(models.Model):
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
 
     title = models.CharField(max_length = 255)
-    content = models.TextField()
-
+    content = models.TextField(null = True, blank = True)   # So far this is just temporary 
+    header_image = models.ImageField(null = True, blank = True, upload_to = 'images/')
+    
     # Validated as a JSON list of non-empty strings.
     #categories = models.JSONField(validators = [validate_categories], default = list)
 
