@@ -56,11 +56,22 @@ class AddPostView(generic.CreateView):
         obj.save()
 
         return render(request, 'bettersocial/profile.html', {'user': request.user}) # Going back to the profile page / home page currently
-       
 
 @method_decorator(login_required, name = 'dispatch')
 class AddCommentView(generic.CreateView):
     model = Comment
+    form_class = CommentCreationForm    
+    template_name = 'bettersocial/add_comment.html'
+    #success_url = reverse_lazy('bettersocial:index')
+
+    # Injections the proper post id for the comment
+    def form_valid (self, form):
+        form.instance.post_id = self.kwargs['pk']
+        form.instance.author_uuid = self.request.user.author.uuid
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy('bettersocial:article_details', kwargs={'pk': self.kwargs['pk']})
 
 
 
