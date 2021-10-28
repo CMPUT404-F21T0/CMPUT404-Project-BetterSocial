@@ -1,17 +1,15 @@
-{% extends 'bettersocial/base.html' %}
-{% block content %}
-{% if inbox_items %}
+{% extends 'bettersocial/base.html' %} {% block content %} {% if object_list %}
 <div
 	class="inbox"
-	style="height: 0; display: flex; flex-direction: column; overflow: hidden"
+	style="display: flex; flex-direction: column; overflow: hidden"
 >
-	{% for post in inbox_items %}
-	<div class="post" style="">
-		<h2>Post</h2>
+	{% for inbox_object in object_list %}
+	<div class="inbox_obj">
+		<h1>inbox_object</h1>
+		<h2>Like from {{inbox_object.author.display_name}}</h2>
 	</div>
 	{% endfor %}
 </div>
 {% else %}
-<p>No posts in inbox./</p>
-{% endif %}
-{% endblock %}
+<p>No items in inbox.</p>
+{% endif %} {% endblock %}
