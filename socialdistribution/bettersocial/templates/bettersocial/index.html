@@ -15,7 +15,7 @@
                     </a>
                     <!-- TODO: should change href to user profile link -->
                     <a href="{% url 'bettersocial:profile' %}">
-                        <h3>{{ user.username }}</h3>
+                        <h3>{{ post.author.user }}</h3>
                     </a>
                 </div>
 
@@ -29,7 +29,7 @@
 
             <!-- TODO: add logic for type of post -->
             <div class="post-container">
-                {{ post.content|slice:":100" }}
+                {{ post.description|slice:":100" }}
                 </br></br>
                 {% if post.header_image %}
                     <img src="{{ post.header_image.url }}" width='600' height='400'>

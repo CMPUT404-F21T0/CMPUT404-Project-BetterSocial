@@ -26,7 +26,8 @@ class ArticleDetailView(generic.DetailView):
 class UpdatePostView(generic.UpdateView):
     model = Post
     template_name = 'bettersocial/edit_post.html'
-    fields = ['title', 'content', 'visibility', 'header_image']
+    fields = ['title', 'description', 'visibility', 'header_image']
+    
     def get_success_url(self):
         return reverse_lazy('bettersocial:article_details', kwargs={'pk': self.kwargs['pk']})
 
