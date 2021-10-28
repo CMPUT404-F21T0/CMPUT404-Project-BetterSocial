@@ -1,13 +1,82 @@
-{% extends 'bettersocial/base.html' %} {% block content %}
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+{% load static %}
+<!-- Style Sheet and References -->
+<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/profile.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}">
 
-<h2>Profile Stub!</h2>
-<table>
-	<tr>
-		<td><b>Username:</b> {{ user.username }}</td>
-	</tr>
-	<tr>
-		<td><b>Full Name:</b> {{ user.first_name }} {{ user.last_name }}</td>
-	</tr>
-</table>
+    <div class="profile">
+        <div class="profile-header">
+            <div class="profile-pic">
+                <span class="iconify" data-icon="healthicons:ui-user-profile-outline" data-width="150" data-height="150"></span>
+            </div>
 
+            <!-- TODO: dynamically add user info, GIT, Email, Bio -->
+            <div class="profile-info">
+                    <h1> {{ user.first_name }} {{ user.last_name }}</h1>
+                    <p>Email: johndoe@gmail.com</p>
+                    <p>Github: <a href="">https://github.com/johndoe</a></p>
+                    <p>Bio: This is a John Doe's bio</p>
+            </div>
+            <!-- TODO: connect friends list to friend button -->
+            <!-- TODO: show edit profile if user is logged in? -->
+            <!-- TODO: add friend/follow button for different user? -->
+            <div class="profile-friend-btn">
+                <button>Friends</button>
+            </div>
+        </div>
+
+    <!-- TODO: For posts in user.posts -->
+        <!-- TODO: show public post? -->
+        <!-- TODO: show friends only post? -->
+        <!-- TODO: show private post for user thats logged in? -->
+        <div class="profile-post">
+            <div class="post-header">
+                <!-- TODO: add if user has profile pic show pic if not show icon -->
+                <!-- TODO: should change href to user profile link -->
+                <div class="left">
+                    <a href="{% url 'bettersocial:profile' %}">
+                        <span class="iconify" data-icon="iconoir:profile-circled" data-width="42" data-height="42"></span>
+                    </a>
+                    <!-- TODO: should change href to user profile link -->
+                    <a href="{% url 'bettersocial:profile' %}">
+                        <h3>{{ user.username }}</h3>
+                    </a>
+                </div>
+
+                <!-- TODO: change the time to be dynamically added -->
+                <!-- TODO: change the link to be dynamically added and href -->
+                <div class="right">
+                    <p>4 mins ago...</p>
+                    <a href="">http://webapp.herokuapp.com/</a>
+                </div>
+            </div>
+
+            <!-- TODO: add logic for type of post -->
+            <div class="post-container">
+                content
+            </div>
+
+            <div class="post-footer right">
+                    <!-- TODO: Edit href for share post -->
+                    <a href="">
+                        <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
+                    </a>
+                <a class="icon-text" href="">Share Post</a>
+                    <!-- TODO: Edit href for share likes and dynamically add number of likes -->
+                    <!-- TODO: Pluralize likes  -->
+                    <a href="">
+                        <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
+                    </a>
+                <a class="icon-text" href="">Likes</a>
+                    <!-- TODO: Edit href for comments and dynamically add number of comments -->
+                    <!-- TODO: Pluralize comments  -->
+                    <a href="">
+                        <span class="iconify" data-icon="ant-design:comment-outlined" data-width="30" data-height="30"></span>
+                    </a>
+                <a class="icon-text" href="">Comments</a>
+            </div>
+    <!-- ENDFOR -->
+
+    </div>
 {% endblock %}

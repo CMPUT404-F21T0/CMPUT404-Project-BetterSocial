@@ -1,12 +1,18 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
+{% load static %}
+<!-- Style Sheet and References -->
+<link rel="stylesheet" type="text/css" href="{% static 'users/login.css' %}">
 
+<div class="login">
+    <div class="login-header">
     <h2>Create Account</h2>
-
+    </div>
     {% if form.errors %}
         <p style="color: red">{{ form.errors }}</p>
     {% endif %}
 
+    <div class="login-form">
     <form method="post" action="{% url 'users:register' %}">
         {% csrf_token %}
         <table>
@@ -35,9 +41,12 @@
             <tr style="height: 10pt"></tr>
         </table>
 
+        <div class="register-box">
         <input type="submit" value="Register">
         <input type="hidden" name="next" value="{{ next }}">
+        </div>
 
     </form>
-
+</form>
+</div>
 {% endblock %}

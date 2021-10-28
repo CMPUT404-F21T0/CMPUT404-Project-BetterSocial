@@ -1,17 +1,19 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
-from django.db import models
+from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
-
 from django.views import generic
 from django.db.models import Q
 
 from bettersocial.models import Author, Follower, Following, Inbox, Post
 
-
 class IndexView(generic.base.TemplateView):
     template_name = 'bettersocial/index.html'
+    context_object_name = 'user_list'
 
+    # TODO: Not sure if this is the proper way to query all users / users post in db
+    def users(self):
+        return User.objects.all()
 
 @method_decorator(login_required, name = 'dispatch')
 class ProfileView(generic.base.TemplateView):
