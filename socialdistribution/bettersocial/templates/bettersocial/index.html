@@ -10,11 +10,11 @@
                 <!-- TODO: add if user has profile pic show pic if not show icon -->
                 <!-- TODO: should change href to user profile link -->
                 <div class="left">
-                    <a href="{% url 'bettersocial:profile' %}">
+                    <a href="{% url 'bettersocial:profile' user.author.uuid %}">
                         <span class="iconify" data-icon="iconoir:profile-circled" data-width="42" data-height="42"></span>
                     </a>
                     <!-- TODO: should change href to user profile link -->
-                    <a href="{% url 'bettersocial:profile' %}">
+                    <a href="{% url 'bettersocial:profile' user.author.uuid %}">
                         <h3>{{ user.username }}</h3>
                     </a>
                 </div>

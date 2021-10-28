@@ -11,12 +11,28 @@ class IndexView(generic.base.TemplateView):
     context_object_name = 'user_list'
 
     # TODO: Not sure if this is the proper way to query all users / users post in db
+    # using this to test clicking through different profiles it should be changed
     def users(self):
         return User.objects.all()
 
 @method_decorator(login_required, name = 'dispatch')
-class ProfileView(generic.base.TemplateView):
+class ProfileView(generic.ListView):
+    model = Author
     template_name = 'bettersocial/profile.html'
+    context_object_name = "current_user"
+
+    def get_context_data(self, **kwargs):
+        author_uuid = self.kwargs["uuid"]    
+        context = super(ProfileView, self).get_context_data(**kwargs)
+        # Shows all the posts of the current logged in user
+        # not sure how to handle a user viewing a different user's profile
+        # TODO: fix this so it queries public/friend post
+        context['posts'] = Post.objects.filter(author__uuid = author_uuid)
+        return context
+
+    def get_queryset(self):
+        uuid = self.kwargs["uuid"]        
+        return Author.objects.get(uuid = uuid)
 
 @method_decorator(login_required, name = 'dispatch')
 class InboxView(generic.base.TemplateView):
