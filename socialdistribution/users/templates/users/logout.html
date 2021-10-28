@@ -1,8 +1,14 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
+{% load static %}
+<!-- Style Sheet and References -->
+<link rel="stylesheet" type="text/css" href="{% static 'users/login.css' %}">
 
-    <h2>You have now logged out.</h2>
-
-    <a type="button" href="{% url 'users:login' %}">Log in again</a>
-
+<div class="login">
+    <div class="login-header">
+        <h2>You have now logged out.</h2>
+        
+        <a type="button" href="{% url 'users:login' %}">Log in again</a>
+    </div>
+</div>
 {% endblock %}
