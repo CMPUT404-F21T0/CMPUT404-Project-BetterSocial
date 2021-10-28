@@ -1,0 +1,28 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+
+    <h1>Edit a Post</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <!-- Fields can be expanded -->
+        <table>
+            <tr>
+                <td>{{ form.title.label_tag }}</td>
+                <td>{{ form.title }}</td>
+            </tr>
+            <tr>
+                <td>{{ form.content.label_tag }}</td>
+                <td>{{ form.content }}</td>
+            </tr>
+            <tr>
+                <td>{{ form.visibility.label_tag }}</td>
+                <td>{{ form.visibility }}</td>
+            </tr>
+        </table>
+
+        </br></br>
+        <a href="{% url 'bettersocial:index' %}"> <button>Update</button></a>
+    </form>
+
+{% endblock %}

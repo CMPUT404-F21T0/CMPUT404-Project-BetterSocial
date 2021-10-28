@@ -2,5 +2,24 @@
 {% block content %}
 
     <h2>Index Stub!</h2>
+    <ul>
+    <h2>Public Posts</h2>   
+    {% for post in object_list %} 
+        <li> 
+            <a href= "{% url 'bettersocial:article_details' post.pk %}">  {{ post.title }} </a>
+             - {{ post.author.user }} 
+                {% if user.is_authenticated %}
+                    <!--To verify whether an author is allowed to edit/delete a post-->
+                    {% if user.author.uuid == post.author.uuid %}
+                        <a href= "{% url 'bettersocial:edit_post' post.pk %}">Edit</a>
+                        <a href= "{% url 'bettersocial:delete_post' post.pk %}">Delete</a>
+                    {% endif %}
+                {% endif %}
+             <br/>
+             <!-- Limits the content to be only 100 characters long -->
+            {{ post.content|slice:":100" }}
+        </li>
+    {% endfor %}
+    </ul>   
 
 {% endblock %}

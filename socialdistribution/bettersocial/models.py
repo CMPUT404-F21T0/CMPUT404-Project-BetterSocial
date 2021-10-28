@@ -46,6 +46,8 @@ class Author(models.Model):
     def display_name(self) -> str:
         return f'{self.user.first_name} {self.user.last_name}'
 
+    def __str__(self):
+        return str(self.user.first_name) + ' ' + str(self.user.last_name)
 
 class Like(models.Model):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
@@ -121,7 +123,7 @@ class Likeable(models.Model):
         abstract = True
 
 
-class Post(Likeable):
+class Post(models.Model):
     """Represents a post made by a user. Can have multiple types and has visibility settings"""
 
     type = "Post"
@@ -134,7 +136,7 @@ class Post(Likeable):
     # UUID of the Post object
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
-    author = models.ForeignKey(Author, on_delete = models.CASCADE)
+    author = models.ForeignKey(Author, default=None, on_delete = models.CASCADE)
 
     # Used to determine which author UUID the author of this post wants to send this post to. Does not mean anything unless the visibility is PRIVATE.
     recipient_uuid = models.UUIDField(null = True)
@@ -163,9 +165,12 @@ class Post(Likeable):
     # Automatically sets the time to now on add and does not allow updates to it -- https://docs.djangoproject.com/en/3.2/ref/models/fields/#django.db.models.DateField.auto_now_add
     published = models.DateTimeField(auto_now_add = True)
 
+    def __str__(self):
+        return self.title + ' | ' + str(self.author.user)
 
 
-class Comment(Likeable):
+
+class Comment(models.Model):
     """Represents a comment on a post on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
     type = "Comment"
@@ -174,11 +179,11 @@ class Comment(Likeable):
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     # Comment belongs to a post
-    post = models.ForeignKey(Post, on_delete = models.CASCADE)
+    post = models.ForeignKey(Post, related_name = "comments",on_delete = models.CASCADE) # related_name = "comments"
 
     # Should ideally be a FK BUT since foreign comments would be stored in this database (i.e. would be POSTed from another server), it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
-    author_uuid = models.UUIDField()
-
+    author_uuid = models.UUIDField() #models.ForeignKey(Author, default=None, on_delete = models.CASCADE) #
+ 
     # Reuse the same choices as post. Although TODO: 2021-10-21 image types may be rejected, that is TBD
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
     comment = models.TextField()
@@ -194,6 +199,9 @@ class Comment(Likeable):
 
         return ContentType[self.content_type]
 
+    def __str__(self):
+        #author = Author.objects.get(uuid=self.author_uuid)
+        return str(self.post.title) + ' | ' + str(self.author_uuid) + ' | ' + str(self.author_uuid)
 
 class Follower(models.Model):
     """Represents a single follow from SOME user (local or remote) to OUR user (local). A bidirectional relationship on Follower/Following implies friendship. IFF there is an entry in this table and NOT Following, this counts as a friend "request". An author would "approve" a friend request by following the author back, which would make an entry in the Following table."""

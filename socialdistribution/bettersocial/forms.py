@@ -1,4 +1,4 @@
-from .models import Post
+from .models import Comment, Post
 from django.forms import ModelForm
 
 class PostCreationForm(ModelForm):
@@ -10,3 +10,12 @@ class PostCreationForm(ModelForm):
         fields = ['title',
                   'content', 
                   'visibility']
+
+class CommentCreationForm(ModelForm):
+
+    class Meta:
+        model = Comment
+
+        # Fields can be added
+        fields = ['author_uuid',
+                  'comment']
