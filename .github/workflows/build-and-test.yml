@@ -28,6 +28,8 @@ jobs:
 
       - name: Set up Python 3
         uses: actions/setup-python@v2.2.2
+        with:
+          python-version: '3.9.x'
 
       - name: Install requirements
         run: pip3 install -r requirements.txt

@@ -1,5 +1,5 @@
-import uuid as uuid
-from typing import Optional
+import uuid
+from uuid import UUID
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -16,6 +16,17 @@ class ContentType(models.TextChoices):
     BASE64 = 'application/base64', 'Base64 Encoded'
     IMAGE_PNG = 'image/png;base64', 'Image (PNG)'
     IMAGE_JPEG = 'image/jpeg;base64', 'Image (JPEG)'
+
+
+class LocalAuthorMixin:
+    @property
+    def author_local(self) -> 'Author':
+        """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
+
+        try:
+            return Author.objects.get(uuid = self.author_uuid)
+        except Author.DoesNotExist as e:
+            raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
 
 
 # -- Main Models -- #
@@ -46,8 +57,11 @@ class Author(models.Model):
     def display_name(self) -> str:
         return f'{self.user.first_name} {self.user.last_name}'
 
+    def friends_with(self, author_uuid: UUID) -> bool:
+        return self.following_set.filter(following_uuid = author_uuid).exists() and self.follower_set.filter(follower_uuid = author_uuid).exists()
 
-class Like(models.Model):
+
+class Like(models.Model, LocalAuthorMixin):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
     type = "Like"
@@ -76,15 +90,6 @@ class Like(models.Model):
         verbose_name_plural = 'Likes'
 
         unique_together = ['author_uuid', 'dj_object_uuid', 'dj_content_type']
-
-    @property
-    def author_local(self) -> Optional[Author]:
-        """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
-
-        try:
-            return Author.objects.get(uuid = self.author_uuid)
-        except Author.DoesNotExist as e:
-            raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
 
 
 class LikedRemote(models.Model):
@@ -115,7 +120,7 @@ class Likeable(models.Model):
     """Abstract object that can be liked. The point of this is to define the reverse relationship below."""
 
     # Defines the reverse of the relationship so any likeable model can go .objects.likes.all() or something similar
-    like_set = GenericRelation(Like, object_id_field = 'dj_object_id', content_type_field = 'dj_content_type')
+    like_set = GenericRelation(Like, object_id_field = 'dj_object_uuid', content_type_field = 'dj_content_type')
 
     class Meta:
         abstract = True
@@ -179,7 +184,7 @@ class Post(Likeable):
         return Post.Visibility[self.visibility]
 
 
-class Comment(Likeable):
+class Comment(Likeable, LocalAuthorMixin):
     """Represents a comment on a post on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
     type = "Comment"
@@ -241,6 +246,7 @@ class Following(models.Model):
         unique_together = ['author', 'following_uuid']
 
 
+# TODO: 2021-10-26 rename model to be clearer
 class Inbox(models.Model):
     """Each row represents an object that is SENT to the user's inbox."""
 

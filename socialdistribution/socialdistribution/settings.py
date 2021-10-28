@@ -141,4 +141,4 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Overrides settings using the ones from Heroku
-django_on_heroku.settings(locals())
+django_on_heroku.settings(locals(), test_runner = False)
