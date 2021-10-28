@@ -20,3 +20,4 @@ class CommentCreationForm(ModelForm):
         fields = ['author_uuid',
                   'author_username',
                   'comment']
+

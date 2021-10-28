@@ -18,8 +18,18 @@ class ContentType(models.TextChoices):
     IMAGE_JPEG = 'image/jpeg;base64', 'Image (JPEG)'
 
 
-# -- Main Models -- #
+class LocalAuthorMixin:
+     @property
+     def author_local(self) -> 'Author':
+         """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
 
+         try:
+             return Author.objects.get(uuid = self.author_uuid)
+         except Author.DoesNotExist as e:
+             raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
+
+
+# -- Main Models -- #
 
 class Author(models.Model):
     """AKA the profile of a user"""
@@ -117,7 +127,7 @@ class Likeable(models.Model):
     """Abstract object that can be liked. The point of this is to define the reverse relationship below."""
 
     # Defines the reverse of the relationship so any likeable model can go .objects.likes.all() or something similar
-    like_set = GenericRelation(Like, object_id_field = 'dj_object_id', content_type_field = 'dj_content_type')
+    like_set = GenericRelation(Like, object_id_field = 'dj_object_uuid', content_type_field = 'dj_content_type')
 
     class Meta:
         abstract = True
@@ -151,11 +161,11 @@ class Post(Likeable):
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
 
     title = models.CharField(max_length = 255)
-    content = models.TextField(null = True, blank = True)   # So far this is just temporary 
+    content = models.TextField(null = True, blank = True)
     header_image = models.ImageField(null = True, blank = True, upload_to = 'images/')
     
     # Validated as a JSON list of non-empty strings.
-    #categories = models.JSONField(validators = [validate_categories], default = list)
+    categories = models.JSONField(validators = [validate_categories], default = list)
 
     # Soft enum type, enforced in Django, not database level
     visibility = models.CharField(max_length = 32, choices = Visibility.choices, default = Visibility.PUBLIC)
@@ -175,7 +185,7 @@ class Post(Likeable):
         return ContentType[self.content_type]
 
     def get_visibility(self) -> Visibility:
-        """Gets the Visibility object of the current type """
+        """Gets the Visibility object of the current type (includes both value and label). This exists because the visibility field would only return the value, and you might want the label."""
         return Post.Visibility[self.visibility]
 
     def __str__(self):
@@ -218,6 +228,7 @@ class Comment(models.Model):
         #author = Author.objects.get(uuid=self.author_uuid)
         return str(self.post.title) + ' | ' + str(self.author_username) 
 
+
 class Follower(models.Model):
     """Represents a single follow from SOME user (local or remote) to OUR user (local). A bidirectional relationship on Follower/Following implies friendship. IFF there is an entry in this table and NOT Following, this counts as a friend "request". An author would "approve" a friend request by following the author back, which would make an entry in the Following table."""
 
@@ -236,7 +247,6 @@ class Follower(models.Model):
 
 class Following(models.Model):
     """Represents a single follow from OUR user (local) to SOME user (local or remote). A bidirectional relationship on Following/Follower implies friendship"""
-
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Should ideally be a FK BUT since foreign follows would be stored in this database, it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
@@ -249,7 +259,7 @@ class Following(models.Model):
 
         unique_together = ['author', 'following_uuid']
 
-
+# TODO: 2021-10-26 rename model to be clearer
 class Inbox(models.Model):
     """Each row represents an object that is SENT to the user's inbox."""
 
@@ -264,7 +274,7 @@ class Inbox(models.Model):
 
     # TODO: 2021-10-21 add proper validator
     # A minimal or full representation of the object. This object always exists elsewhere, this is effectively a reference to it, as the various fields in here would allow it to point to the right object.
-    object = models.JSONField(default = dict)
+    inbox_object = models.JSONField(default = dict)
 
     class Meta:
         verbose_name = 'Inbox'
