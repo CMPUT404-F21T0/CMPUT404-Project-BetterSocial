@@ -1,4 +1,5 @@
 import uuid as uuid
+from uuid import UUID
 from typing import Optional
 
 from django.contrib.auth.models import User
@@ -55,6 +56,9 @@ class Author(models.Model):
     @property
     def display_name(self) -> str:
         return f'{self.user.first_name} {self.user.last_name}'
+
+    def friends_with(self, author_uuid: UUID) -> bool:
+        return self.following_set.filter(following_uuid = author_uuid).exists() and self.follower_set.filter(follower_uuid = author_uuid).exists()
 
     def __str__(self):
         return str(self.user.first_name) + ' ' + str(self.user.last_name)
