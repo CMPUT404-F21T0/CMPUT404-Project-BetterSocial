@@ -161,7 +161,7 @@ class Post(Likeable):
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
 
     title = models.CharField(max_length = 255)
-    content = models.TextField(null = True, blank = True)
+    description = models.TextField(null = True, blank = True)
     header_image = models.ImageField(null = True, blank = True, upload_to = 'images/')
     
     # Validated as a JSON list of non-empty strings.
