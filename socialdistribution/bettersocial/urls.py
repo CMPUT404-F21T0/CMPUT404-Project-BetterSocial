@@ -16,4 +16,7 @@ urlpatterns = [
     url(r'^article/(?P<pk>[\w-]+)/remove/$', views.DeletePostView.as_view(), name='delete_post'),
     url(r'^article/(?P<pk>[\w-]+)/comment/$', views.AddCommentView.as_view(), name='add_comment'),
     path('profile/', views.ProfileView.as_view(), name = 'profile'),
+    path('inbox/', views.InboxView.as_view(), name = 'inbox'),
+    path('stream/', views.StreamView.as_view(), name = 'stream'),
+
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
