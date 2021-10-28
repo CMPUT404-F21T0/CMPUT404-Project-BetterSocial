@@ -5,9 +5,10 @@
 >
 	{% for inbox_object in object_list %}
 	<div class="inbox_obj">
-		<h1>inbox_object</h1>
-		<h2>Like from {{inbox_object.author.display_name}}</h2>
+		<h1>Follower Request</h1>
+		<p>New follow request from {{inbox_object.author.display_name}}</p>
 	</div>
+
 	{% endfor %}
 </div>
 {% else %}

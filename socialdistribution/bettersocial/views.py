@@ -27,7 +27,7 @@ class InboxView(generic.ListView):
 
     def get_queryset(self):
         """Return all inbox items."""
-        content_type = DjangoContentType.objects.get_for_model(model = Post)
+        content_type = DjangoContentType.objects.get_for_model(model = Follower)
         return Inbox.objects.filter(Q(dj_content_type=content_type))
 
 @method_decorator(login_required, name = 'dispatch')
