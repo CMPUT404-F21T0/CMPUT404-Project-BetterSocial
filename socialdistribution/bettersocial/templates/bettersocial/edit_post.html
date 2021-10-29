@@ -1,0 +1,66 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+{% load static %}
+
+<!-- Style Sheet and References -->
+<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/postapost.css' %}">
+
+<h1>Edit a Post</h1>
+
+</br></br>
+
+<!-- Temporary HTML / CSS -->
+<div class="container"></div>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+            <div class="size-25">
+                {{ form.title.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.title }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.description.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.description }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.content.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.content }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.visibility.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.visibility }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.image_content.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.image_content }}
+            </div>
+        </div>
+
+        </br></br>
+        <a href="{% url 'bettersocial:index' %}"> <button>Update</button></a>
+    </form>
+</div>
+
+{% endblock %}
