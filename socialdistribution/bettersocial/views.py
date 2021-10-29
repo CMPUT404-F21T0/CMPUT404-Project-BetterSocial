@@ -78,7 +78,7 @@ class ProfileView(generic.base.TemplateView):
             context['posts'] = Post.objects.filter(
                 (Q(visibility = Post.Visibility.PUBLIC) & Q(author__uuid = author_uuid)) |
                 (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = user_uuid) & Q(author__following__following_uuid = user_uuid)) |
-                (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = user_uuid))).order_by('-published')
+                (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = user_uuid))).distinct().order_by('-published')
 
         return context
 
