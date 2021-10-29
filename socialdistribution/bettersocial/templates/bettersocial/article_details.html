@@ -1,30 +1,53 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
-    <h1>Viewing Post</h1>
-    <h1>{{ post.title }}</h1>
-    <small> By: {{ post.author.user.first_name }} {{ post.author.user.last_name }}</small>
-    <hr/>
-    <br/>
-    {% csrf_token %}
-    {{post.content}}
-    <br/>
-    <br/>
-    <br/> 
-    <h1>Comment Section:</h1>
-    {% if not comments %} 
-        No comments... <a href="{% url 'bettersocial:add_comment' post.pk %}">Add first comment!</a>
-    {% else %} 
-        <a href="{% url 'bettersocial:add_comment' post.pk %}">Add comment!</a>
-        <br/>
-        <br/>
-        {% for comment in comments %}
-            <strong>{{ comment.author_username }} -  {{ comment.published }}</strong>
-            <br/>
-            {{ comment.comment }}
-            <hr/>
-            <br/>
-            <br/>
-        {% endfor %}
-    {% endif %}
+{% load static %}
+<!-- Style Sheet and References -->
+<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/post-preview.css' %}">
+    
+<h1>Viewing Post</h1>
+    <div class="post">
+        <div class="post-container">
+            {% csrf_token %}
+            <h2 class="post-title">{{ post.title }}</h2>
+            <h4 class="post-publisher">By: {{ post.author.display_name }}</h4>
+            <p class="post-description"> {{ post.description }}</p>
+            <hr>
+            {% if post.content_type == "application/base64" %}
+                <!-- TODO: not really sure what to do here  -->
+                <div class="post-content"> {{ post.content }}</div>
 
+            {% elif post.content_type == "text/markdown" %}
+                {% load markdown_extras %}
+                <div class="post-content">
+                    <span>{{ post.content | markdown | safe }}</span>
+                    {% if post.image_content %}
+                        <img src="{{ post.image_content.url }}" width='600' height='400'>
+                    {% endif %}
+                </div>
+            {% elif post.content_type == "image/jpeg;base64" or post.content_type == "image/png;base64" %}
+                <div class="image-container">
+                    <img id='base64image' src='data:{{ post.content_type }}, {{ post.content }}'/>
+                </div>
+            {% elif post.content_type == "text/plain" %}
+                <div class="post-content">{{ post.content }}</div>
+                {% if post.image_content %}
+                    <img src="{{ post.image_content.url }}" width='600' height='400'>
+                {% endif %}
+            {% endif %}
+        </div>
+        <h2 class="post-title">Comment Section:</h2>
+        {% if not comments %} 
+            <div class = "post-content">No comments... <a href="{% url 'bettersocial:add_comment' post.pk %}">Add the first comment!</a></div>
+            <br/>
+        {% else %} 
+            <div class = "post-content"><a href="{% url 'bettersocial:add_comment' post.pk %}">Add comment!</a></div>
+            <br/>
+            <hr>
+            {% for comment in comments %}
+                <div class = "post-content"> <strong>{{ comment.author_username }} -  {{ comment.published }}</strong> </div>
+                <div class = "post-content"> {{ comment.comment }} </div>
+                <hr/>
+            {% endfor %}
+        {% endif %}
+    </div>
 {% endblock %}
