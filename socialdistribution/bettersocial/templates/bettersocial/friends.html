@@ -25,10 +25,12 @@
                 {% if friend_request_list %}
                     <div class="grid-wrapper">
                         {% for author, uuid in friend_request_list %}
-                            <span class="grid-item grid-left iconify" data-icon="iconoir:profile-circled"
-                                  data-width="56"
-                                  data-height="56"></span>
-                            <span class="grid-item grid-span-2 grid-left">{{ author.display_name }}</span>
+                            <a class="grid-item grid-span-3 grid-left flex-container flex-center" href="{% url 'bettersocial:profile' uuid %}">
+                                <span class="grid-item grid-left iconify" data-icon="iconoir:profile-circled"
+                                      data-width="56"
+                                      data-height="56"></span>
+                                <span style="margin-left: 1em">{{ author.display_name }}</span>
+                            </a>
                             <form action="{% url 'bettersocial:add_following' %}" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="author_uuid" value="{{ uuid }}">
@@ -54,10 +56,12 @@
                 {% if friends_list %}
                     <div class="grid-wrapper">
                         {% for author, uuid in friends_list %}
-                            <span class="grid-item grid-left iconify" data-icon="iconoir:profile-circled"
-                                  data-width="56"
-                                  data-height="56"></span>
-                            <span class="grid-item grid-span-2 grid-left">{{ author.display_name }}</span>
+                            <a class="grid-item grid-span-3 grid-left flex-container flex-center" href="{% url 'bettersocial:profile' uuid %}">
+                                <span class="grid-item grid-left iconify" data-icon="iconoir:profile-circled"
+                                      data-width="56"
+                                      data-height="56"></span>
+                                <span style="margin-left: 1em">{{ author.display_name }}</span>
+                            </a>
                             <form action="{% url 'bettersocial:delete_following' %}" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="author_uuid" value="{{ uuid }}">

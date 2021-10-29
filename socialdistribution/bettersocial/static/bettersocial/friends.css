@@ -37,8 +37,8 @@ input[type="radio"]:checked + label {
     /*grid-column;*/
 }
 
-.grid-span-2 {
-    grid-column: span 2;
+.grid-span-3 {
+    grid-column: span 3;
 }
 
 .grid-left {
