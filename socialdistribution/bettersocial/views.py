@@ -9,7 +9,7 @@ from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 
-from bettersocial.models import Author, Follower, Following, Inbox, Post, Comment, LikedRemote
+from bettersocial.models import Author, Follower, Following, Inbox, Post, Comment
 
 
 class IndexView(generic.ListView):
