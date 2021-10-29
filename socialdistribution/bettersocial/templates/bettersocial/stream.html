@@ -18,22 +18,17 @@
                     </a>
                 </div>
 
-                <!-- TODO: change the link to be dynamically added and href -->
+                <!-- TODO: not sure if this should be source or origin -->
                 <div class="post-header right">
                     <p>{{post.published}}</p>
                     <a href="{{post.source}}">{{post.source}}</a>
                 </div>
             </div>
 
-            <!-- TODO: add logic for type of post -->
             <div class="post-container">
                 <h2 class="post-title">{{post.title}}</h2>
                 <h4 class="post-publisher">By: {{post.author.display_name}}</h4>
                 <p class="post-description"> {{post.description}}</p>
-                <!-- remove this -->
-                {{ post.content_type }}
-                {{ post.uuid }}
-                <!-- remove this -->
                 <hr>
                
                 {% if post.content_type == "application/base64" %}
@@ -52,7 +47,6 @@
                 {% elif post.content_type == "text/plain" %}
                   <div class="post-content">{{post.content}}</div>
                 {% endif %}
-                <!-- </div> -->
             </div>
 
             <div class="post-footer right">
