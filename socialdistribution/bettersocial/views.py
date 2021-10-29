@@ -169,6 +169,7 @@ class FollowersView(generic.TemplateView):
         return context
 
 
+@method_decorator(login_required, name = 'dispatch')
 class DeleteFollowingView(generic.DeleteView):
 
     def get_queryset(self):
@@ -194,6 +195,7 @@ class DeleteFollowingView(generic.DeleteView):
         return HttpResponseRedirect(next_url if next_url else success_url)
 
 
+@method_decorator(login_required, name = 'dispatch')
 class CreateFollowingView(generic.CreateView):
 
     def get_queryset(self):
