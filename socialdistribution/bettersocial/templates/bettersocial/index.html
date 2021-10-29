@@ -4,7 +4,7 @@
 <!-- Style Sheet and References -->
 <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}">
 
-    {% for user in view.users %}
+    {% for post in object_list %}
         <div class="post">
             <div class="post-header">
                 <!-- TODO: add if user has profile pic show pic if not show icon -->
@@ -29,21 +29,34 @@
 
             <!-- TODO: add logic for type of post -->
             <div class="post-container">
-                content
+                {{ post.description|slice:":100" }}
+                </br></br>
+                {% if post.image_content %}
+                    <img src="{{ post.image_content.url }}" width='600' height='400'>
+                {% endif %}
             </div>
 
             <div class="post-footer right">
-                <!-- TODO: Edit href for share post -->
+
+            {% if user.is_authenticated %}
+                {% if user.author.uuid == post.author.uuid %}
+                    <a class="icon-text" href="{% url 'bettersocial:edit_post' post.pk %}">Edit</a>
+                    <a class="icon-text" href="{% url 'bettersocial:delete_post' post.pk %}">Delete</a>
+                {% endif %}
+            {% endif %}
+
                 <a href="">
                     <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
                 </a>
             <a class="icon-text" href="">Share Post</a>
+
                 <!-- TODO: Edit href for share likes and dynamically add number of likes -->
                 <!-- TODO: Pluralize likes  -->
                 <a href="">
                     <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
                 </a>
             <a class="icon-text" href="">Likes</a>
+
                 <!-- TODO: Edit href for comments and dynamically add number of comments -->
                 <!-- TODO: Pluralize comments  -->
                 <a href="">
@@ -51,7 +64,6 @@
                 </a>
             <a class="icon-text" href="">Comments</a>
         </div>
-
-        </div>
+    </div>
     {% endfor %}
 {% endblock %}
