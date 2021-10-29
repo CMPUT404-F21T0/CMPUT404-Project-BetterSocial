@@ -1,6 +1,5 @@
 import uuid as uuid
 from uuid import UUID
-from typing import Optional
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -62,6 +61,7 @@ class Author(models.Model):
 
     def __str__(self):
         return str(self.user.first_name) + ' ' + str(self.user.last_name)
+
 
 class Like(models.Model, LocalAuthorMixin):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
@@ -159,7 +159,7 @@ class Post(Likeable):
     content = models.TextField(null = True, blank = True)
     description = models.TextField(null = True, blank = True)
     image_content = models.ImageField(null = True, blank = True, upload_to = 'images/')
-    
+
     # Validated as a JSON list of non-empty strings.
     categories = models.JSONField(validators = [validate_categories], default = list)
 
@@ -177,19 +177,20 @@ class Post(Likeable):
         verbose_name_plural = 'Posts'
 
     def get_content_type(self) -> ContentType:
-        """Gets the ContentType object of the current type."""
+        """Gets the ContentType object of the current type (includes both value and label). This exists because the content_type field would only return the value, and you might want the label."""
+
         return ContentType[self.content_type]
 
     def get_visibility(self) -> Visibility:
         """Gets the Visibility object of the current type (includes both value and label). This exists because the visibility field would only return the value, and you might want the label."""
+
         return Post.Visibility[self.visibility]
 
     def __str__(self):
         return self.title + ' | ' + str(self.author.user)
 
 
-
-class Comment(Likeable):
+class Comment(Likeable, LocalAuthorMixin):
     """Represents a comment on a post on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
     type = "Comment"
@@ -198,7 +199,7 @@ class Comment(Likeable):
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     # Comment belongs to a post
-    post = models.ForeignKey(Post, related_name = "comments",on_delete = models.CASCADE)
+    post = models.ForeignKey(Post, related_name = "comments", on_delete = models.CASCADE)
 
     # Should ideally be a FK BUT since foreign comments would be stored in this database (i.e. would be POSTed from another server), it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
     author_uuid = models.UUIDField()
@@ -222,7 +223,7 @@ class Comment(Likeable):
 
     def __str__(self):
         # TODO: 2021-10-28 query local authors display name through author uuid, for remote authors TBD
-        return str(self.post.title) + ' | ' + str(self.author_username) 
+        return str(self.post.title) + ' | ' + str(self.author_username)
 
 
 class Follower(models.Model):
@@ -254,6 +255,7 @@ class Following(models.Model):
         verbose_name_plural = 'Following'
 
         unique_together = ['author', 'following_uuid']
+
 
 # TODO: 2021-10-26 rename model to be clearer
 class Inbox(models.Model):
