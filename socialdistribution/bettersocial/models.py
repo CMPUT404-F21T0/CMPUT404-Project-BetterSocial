@@ -1,4 +1,4 @@
-import uuid
+import uuid as uuid
 from uuid import UUID
 
 from django.contrib.auth.models import User
@@ -41,7 +41,6 @@ class LocalAuthorMixin:
 
 # -- Main Models -- #
 
-
 class Author(models.Model):
     """AKA the profile of a user"""
 
@@ -80,6 +79,9 @@ class Author(models.Model):
 
     def friends_with(self, author_uuid: UUID) -> bool:
         return self.following_set.filter(following_uuid = author_uuid).exists() and self.follower_set.filter(follower_uuid = author_uuid).exists()
+
+    def __str__(self):
+        return str(self.user.first_name) + ' ' + str(self.user.last_name)
 
 
 class Like(models.Model, LocalAuthorMixin):
@@ -175,8 +177,9 @@ class Post(Likeable):
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
 
     title = models.CharField(max_length = 255)
-    description = models.TextField()
-    content = models.TextField()
+    content = models.TextField(null = True, blank = True)
+    description = models.TextField(null = True, blank = True)
+    image_content = models.ImageField(null = True, blank = True, upload_to = 'images/')
 
     # Validated as a JSON list of non-empty strings.
     categories = models.JSONField(validators = [validate_categories], default = list)
@@ -204,6 +207,9 @@ class Post(Likeable):
 
         return Post.Visibility[self.visibility]
 
+    def __str__(self):
+        return self.title + ' | ' + str(self.author.user)
+
 
 class Comment(Likeable, LocalAuthorMixin):
     """Represents a comment on a post on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
@@ -214,7 +220,7 @@ class Comment(Likeable, LocalAuthorMixin):
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     # Comment belongs to a post
-    post = models.ForeignKey(Post, on_delete = models.CASCADE)
+    post = models.ForeignKey(Post, related_name = "comments", on_delete = models.CASCADE)
 
     # Should ideally be a FK BUT since foreign comments would be stored in this database (i.e. would be POSTed from another server), it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
     author_uuid = models.UUIDField()
@@ -225,6 +231,8 @@ class Comment(Likeable, LocalAuthorMixin):
 
     published = models.DateTimeField(auto_now_add = True)
 
+    author_username = models.CharField(max_length = 32, null = True)
+
     class Meta:
         verbose_name = 'Comment'
         verbose_name_plural = 'Comments'
@@ -233,6 +241,10 @@ class Comment(Likeable, LocalAuthorMixin):
         """Gets the ContentType object of the current type (includes both value and label). This exists because the content_type field would only return the value, and you might want the label."""
 
         return ContentType[self.content_type]
+
+    def __str__(self):
+        # TODO: 2021-10-28 query local authors display name through author uuid, for remote authors TBD
+        return str(self.post.title) + ' | ' + str(self.author_username)
 
 
 class Follower(models.Model, LocalAuthorMixin):
@@ -253,7 +265,6 @@ class Follower(models.Model, LocalAuthorMixin):
 
 class Following(models.Model, LocalAuthorMixin):
     """Represents a single follow from OUR user (local) to SOME user (local or remote). A bidirectional relationship on Following/Follower implies friendship"""
-
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Should ideally be a FK BUT since foreign follows would be stored in this database, it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
