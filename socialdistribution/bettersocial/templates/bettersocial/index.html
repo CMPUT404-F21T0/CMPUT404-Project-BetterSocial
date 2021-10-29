@@ -31,8 +31,8 @@
             <div class="post-container">
                 {{ post.description|slice:":100" }}
                 </br></br>
-                {% if post.header_image %}
-                    <img src="{{ post.header_image.url }}" width='600' height='400'>
+                {% if post.image_content %}
+                    <img src="{{ post.image_content.url }}" width='600' height='400'>
                 {% endif %}
             </div>
 

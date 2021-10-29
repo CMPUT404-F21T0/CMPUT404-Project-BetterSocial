@@ -20,14 +20,14 @@ class ContentType(models.TextChoices):
 
 
 class LocalAuthorMixin:
-     @property
-     def author_local(self) -> 'Author':
-         """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
+    @property
+    def author_local(self) -> 'Author':
+        """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
 
-         try:
-             return Author.objects.get(uuid = self.author_uuid)
-         except Author.DoesNotExist as e:
-             raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
+        try:
+            return Author.objects.get(uuid = self.author_uuid)
+        except Author.DoesNotExist as e:
+            raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
 
 
 # -- Main Models -- #
@@ -63,7 +63,7 @@ class Author(models.Model):
     def __str__(self):
         return str(self.user.first_name) + ' ' + str(self.user.last_name)
 
-class Like(models.Model):
+class Like(models.Model, LocalAuthorMixin):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
     type = "Like"
@@ -92,15 +92,6 @@ class Like(models.Model):
         verbose_name_plural = 'Likes'
 
         unique_together = ['author_uuid', 'dj_object_uuid', 'dj_content_type']
-
-    @property
-    def author_local(self) -> Optional[Author]:
-        """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
-
-        try:
-            return Author.objects.get(uuid = self.author_uuid)
-        except Author.DoesNotExist as e:
-            raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
 
 
 class LikedRemote(models.Model):
@@ -167,7 +158,7 @@ class Post(Likeable):
     title = models.CharField(max_length = 255)
     content = models.TextField(null = True, blank = True)
     description = models.TextField(null = True, blank = True)
-    header_image = models.ImageField(null = True, blank = True, upload_to = 'images/')
+    image_content = models.ImageField(null = True, blank = True, upload_to = 'images/')
     
     # Validated as a JSON list of non-empty strings.
     categories = models.JSONField(validators = [validate_categories], default = list)
@@ -182,7 +173,7 @@ class Post(Likeable):
     published = models.DateTimeField(auto_now_add = True)
 
     class Meta:
-        verbose_name='Post'
+        verbose_name = 'Post'
         verbose_name_plural = 'Posts'
 
     def get_content_type(self) -> ContentType:

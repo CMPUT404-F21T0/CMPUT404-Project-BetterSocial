@@ -11,7 +11,7 @@ class PostCreationForm(ModelForm):
                   'description', 
                   'content',
                   'visibility',
-                  'header_image']
+                  'image_content']
 
 class CommentCreationForm(ModelForm):
 
