@@ -56,10 +56,6 @@ class DeletePostView(generic.DeleteView):
     template_name = 'bettersocial/delete_post.html'
     success_url = reverse_lazy('bettersocial:index')
     
-    # TODO: Not sure if this is the proper way to query all users / users post in db
-    # using this to test clicking through different profiles it should be changed
-    def users(self):
-        return User.objects.all()
       
 @method_decorator(login_required, name = 'dispatch')
 class ProfileView(generic.base.TemplateView):
