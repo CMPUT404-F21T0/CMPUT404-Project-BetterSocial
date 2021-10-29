@@ -22,9 +22,17 @@
             <h1><a href="{% url 'bettersocial:index' %}">BetterSocial</a></h1>
         </div>
 
+
         <div class="header-item">
-            <a class="friends" href="{% url 'bettersocial:friends' %}">Friends</a>
+            <a class="friends-button" href="{% url 'bettersocial:friends' %}">Friends</a>
         </div>
+
+        {% if user.is_authenticated %}
+            <div class="header-item">
+                <a class="profile-button"
+                   href="{% url 'bettersocial:profile' user.author.pk %}">{{ user.author.display_name }}</a>
+            </div>
+        {% endif %}
 
         <div class="header-item">
             {% if user.is_authenticated %}
