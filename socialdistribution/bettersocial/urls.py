@@ -14,7 +14,7 @@ urlpatterns = [
     path('article/edit/<uuid:pk>/', views.UpdatePostView.as_view(), name='edit_post'),
     path('article/<uuid:pk>/remove/', views.DeletePostView.as_view(), name='delete_post'),
     path('article/<uuid:pk>/comment/', views.AddCommentView.as_view(), name='add_comment'),
-    path('profile/', views.ProfileView.as_view(), name = 'profile'),
+    path('profile/<uuid:uuid>', views.ProfileView.as_view(), name = 'profile'),
     path('inbox/', views.InboxView.as_view(), name = 'inbox'),
     path('stream/', views.StreamView.as_view(), name = 'stream'),
 

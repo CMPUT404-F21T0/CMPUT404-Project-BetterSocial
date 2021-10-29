@@ -36,6 +36,17 @@ p {
     height: 60px;
 }
 
+.post-title {
+    margin-left: 10px;
+}
+
+.post-description {
+    margin-left: 10px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+
 .post-header .left {
     align-items: center;
     display: flex;
