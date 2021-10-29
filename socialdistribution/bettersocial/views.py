@@ -28,9 +28,6 @@ class ArticleDetailView(generic.DetailView):
         author_uuid = post.author.uuid
         user_uuid = self.request.user.author.uuid
 
-        author_following = Following.objects.filter(author=author_uuid).values_list("following_uuid")
-        author_followers = Following.objects.filter(following_uuid=author_uuid).values_list("author__uuid")
-
         if user_uuid == author_uuid:
             context["comments"] = post.comments.all()
             return context
