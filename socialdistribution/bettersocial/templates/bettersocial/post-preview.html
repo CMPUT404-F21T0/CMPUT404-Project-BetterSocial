@@ -25,9 +25,11 @@
         </div>
 
         <div class="post-container">
-            <h2 class="post-title">{{ post.title }}</h2>
-            <h4 class="post-publisher">By: {{ post.author.display_name }}</h4>
-            <p class="post-description"> {{ post.description }}</p>
+            <a href="{% url 'bettersocial:article_details' post.pk %}">
+                <h2 class="post-title">{{ post.title }}</h2>
+                <h4 class="post-publisher">By: {{ post.author.display_name }}</h4>
+                <p class="post-description"> {{ post.description }}</p>
+            </a>
             <hr>
 
             {% if post.content_type == "application/base64" %}
