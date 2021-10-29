@@ -27,19 +27,28 @@
             <!-- TODO: connect friends list to friend button -->
             <div class="profile-friend-btn">
                 <button>Friends</button>
-                <!-- TODO: connect edit profile button -->
-                {% if user.author.uuid == author.uuid %}
-                    <button>Edit Profile</button>
-                <!-- TODO: connect unfriend button -->
-                {% elif author_following_user and user_following_author %}
-                    <button>Unfriend</button>
-                {% elif following %}
-                <!-- TODO: connect unfollow button -->
-                    <button>Unfollow</button>
-                {% else %}
-                <!-- TODO: connect follow button -->
-                    <button>Follow</button>
-                {% endif %}
+                    <!-- TODO: connect edit profile button -->
+                    {% if user.author.uuid == author.uuid %}
+                        <button>Edit Profile</button>
+                    <!-- TODO: connect unfriend button -->
+                    {% elif author_following_user and user_following_author %}
+                        <form action="{% url 'bettersocial:profile_action' author.uuid 'unfollow'%}" method="post">
+                            {% csrf_token %}
+                            <button>Unfriend</button>
+                        </form>
+                    {% elif user_following_author %}
+                    <!-- TODO: connect unfollow button -->
+                        <form action="{% url 'bettersocial:profile_action' author.uuid 'unfollow'%}" method="post">
+                            {% csrf_token %}
+                            <button>Unfollow</button>
+                        </form>
+                    {% else %}
+                    <!-- TODO: connect follow button -->
+                        <form action="{% url 'bettersocial:profile_action' author.uuid 'follow'%}" method="post">
+                            {% csrf_token %}
+                            <button>Follow</button>
+                        </form>
+                    {% endif %}
             </div>
         </div>
 
