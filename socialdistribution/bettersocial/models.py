@@ -23,10 +23,20 @@ class LocalAuthorMixin:
     def author_local(self) -> 'Author':
         """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
 
+        # Massive code smell, I know -- but this is going to be refactored later into a helper function, rather than a mixin. I just need it to work for now.
+        if isinstance(self, Like):
+            uuid_param = self.author_uuid
+        elif isinstance(self, Follower):
+            uuid_param = self.follower_uuid
+        elif isinstance(self, Following):
+            uuid_param = self.following_uuid
+        else:
+            raise NotImplementedError(f'This mixin is not supported on {type(self)} instances!')
+
         try:
-            return Author.objects.get(uuid = self.author_uuid)
+            return Author.objects.get(uuid = uuid_param)
         except Author.DoesNotExist as e:
-            raise Author.DoesNotExist(f'The author with uuid `{self.author_uuid}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
+            raise Author.DoesNotExist(f'The author with uuid `{uuid_param}` could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
 
 
 # -- Main Models -- #
@@ -55,6 +65,17 @@ class Author(models.Model):
     @property
     def display_name(self) -> str:
         return f'{self.user.first_name} {self.user.last_name}'
+
+    @property
+    def friends_set(self):
+        following = { f.following_uuid for f in self.following_set.all() }
+        followers = { f.follower_uuid for f in self.follower_set.all() }
+
+        # TODO: 2021-10-28 refactor later
+        try:
+            return Author.objects.filter(uuid__in = followers & following)
+        except Author.DoesNotExist as e:
+            raise Author.DoesNotExist(f'A friend of author ({self.uuid}) could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
 
     def friends_with(self, author_uuid: UUID) -> bool:
         return self.following_set.filter(following_uuid = author_uuid).exists() and self.follower_set.filter(follower_uuid = author_uuid).exists()
@@ -226,7 +247,7 @@ class Comment(Likeable, LocalAuthorMixin):
         return str(self.post.title) + ' | ' + str(self.author_username)
 
 
-class Follower(models.Model):
+class Follower(models.Model, LocalAuthorMixin):
     """Represents a single follow from SOME user (local or remote) to OUR user (local). A bidirectional relationship on Follower/Following implies friendship. IFF there is an entry in this table and NOT Following, this counts as a friend "request". An author would "approve" a friend request by following the author back, which would make an entry in the Following table."""
 
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
@@ -242,7 +263,7 @@ class Follower(models.Model):
         unique_together = ['author', 'follower_uuid']
 
 
-class Following(models.Model):
+class Following(models.Model, LocalAuthorMixin):
     """Represents a single follow from OUR user (local) to SOME user (local or remote). A bidirectional relationship on Following/Follower implies friendship"""
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 

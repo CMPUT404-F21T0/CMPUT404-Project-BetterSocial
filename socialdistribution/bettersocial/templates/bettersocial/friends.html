@@ -1,0 +1,79 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+    {% load static %}
+
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/friends.css' %}">
+    <script type="text/javascript" src="{% static "bettersocial/friends.js" %}"></script>
+
+    <div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
+        <div style="display: flex; justify-content: center; margin-bottom: 1em">
+            {% include 'bettersocial/messages.html' %}
+        </div>
+        <div style="display: flex; justify-content: center; margin-bottom: 1em">
+            <input class="page-selector-button" id="page-friend-requests" type="radio" name="page-selector"
+                   onclick="showFriendRequestPage()">
+            <label class="button" for="page-friend-requests">Friend Requests</label>
+            <input class="page-selector-button" id="page-friends" type="radio" name="page-selector"
+                   onclick="showFriendListPage()" checked>
+            <label class="button" for="page-friends">Friend List</label>
+        </div>
+        <div id="friend-request-page" hidden>
+            <div
+                    class="stream"
+                    style="display: flex; flex-direction: column; overflow: hidden;"
+            >
+                {% if friend_request_list %}
+                    <div class="grid-wrapper">
+                        {% for author, uuid in friend_request_list %}
+                            <span class="grid-item grid-left iconify" data-icon="iconoir:profile-circled"
+                                  data-width="56"
+                                  data-height="56"></span>
+                            <span class="grid-item grid-span-2 grid-left">{{ author.display_name }}</span>
+                            <form action="{% url 'bettersocial:add_following' %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="author_uuid" value="{{ uuid }}">
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <input type="submit" class="grid-item button" value="Accept">
+                            </form>
+                            <form>
+                                <input type="submit" class="grid-item button" value="Reject">
+                            </form>
+                            <span class="grid-rule"></span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No friend requests.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div id="friend-list-page">
+            <div
+                    class="stream"
+                    style="display: flex; flex-direction: column; overflow: hidden;"
+            >
+                {% if friends_list %}
+                    <div class="grid-wrapper">
+                        {% for author, uuid in friends_list %}
+                            <span class="grid-item grid-left iconify" data-icon="iconoir:profile-circled"
+                                  data-width="56"
+                                  data-height="56"></span>
+                            <span class="grid-item grid-span-2 grid-left">{{ author.display_name }}</span>
+                            <form action="{% url 'bettersocial:delete_following' %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="author_uuid" value="{{ uuid }}">
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <input type="submit" class="grid-item button" value="Remove">
+                            </form>
+                            <form action="{% url 'bettersocial:profile' uuid %}">
+                                <input type="submit" class="grid-item button" value="Profile">
+                            </form>
+                            <span class="grid-rule"></span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No friends.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -47,11 +47,19 @@ cd socialdistribution/
 ```
 
 Run any pending migrations:
+
 ```console
 python3 manage.py migrate
 ```
 
 Start the development server:
+
 ```console
 python3 manage.py runserver
 ```
+
+## External Sources
+
+- Button CSS for the fiends list page: [https://codepen.io/jacobberglund/pen/AKiBf]()
+
+## Collaboration

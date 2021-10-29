@@ -1,7 +1,11 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -12,6 +16,7 @@ from bettersocial.models import Author, Follower, Following, Inbox, Post, Commen
 from .forms import CommentCreationForm, PostCreationForm
 
 
+@method_decorator(login_required, name = 'dispatch')
 class IndexView(generic.ListView):
     model = Post
     template_name = 'bettersocial/index.html'
@@ -97,7 +102,7 @@ class AddPostView(generic.CreateView):
 
     # Changes require in the future
     # The form itself has error message for the user if he / she does it incorrectly.
-    def post(self, request):
+    def post(self, request, **kwargs):
         form = PostCreationForm(request.POST, request.FILES)
 
         obj = form.save(commit = False)
@@ -158,3 +163,77 @@ class StreamView(generic.ListView):
             (Q(visibility = Post.Visibility.PUBLIC)) |
             (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author_uuid) & Q(author__following__following_uuid = author_uuid)) |
             (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author_uuid))).order_by('-published')
+
+
+@method_decorator(login_required, name = 'dispatch')
+class FollowersView(generic.TemplateView):
+    template_name = 'bettersocial/friends.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Different way to get author than normal. This is because we want to utilize the prefetch_related optimization. This ensures that the queries following_set.all() and follower_set.all() are preloaded.
+        author: Author = Author.objects.filter(user_id = self.request.user.id).prefetch_related('following_set', 'follower_set').get()
+
+        # Save both as sets because we need to do XOR on them for follower list
+        follower_set = { f.author_local for f in author.follower_set.all() }
+        friends_set = { a for a in author.friends_set.all() }
+
+        # Friend requests are any author that is NOT currently a friend and ALSO follows the current author
+        context['friend_request_list'] = [(author, str(author.uuid)) for author in follower_set ^ friends_set]
+        context['friends_list'] = [(author, str(author.uuid)) for author in friends_set]
+
+        return context
+
+
+@method_decorator(login_required, name = 'dispatch')
+class DeleteFollowingView(generic.DeleteView):
+
+    def get_queryset(self):
+        return Following.objects.none()
+
+    def delete(self, request, *args, **kwargs):
+        author_uuid = request.user.author.uuid
+        following_uuid = request.POST.get('author_uuid')
+        next_url = request.POST.get('next')
+
+        # used as a backup in case next is not present
+        success_url = reverse_lazy('bettersocial:friends')
+
+        if not following_uuid:
+            messages.add_message(request, messages.ERROR, 'author_uuid not present!')
+
+        # Have to delete both relations (each row is from a different user perspective)
+        Following.objects.filter(author_id = author_uuid, following_uuid = following_uuid).delete()
+        Follower.objects.filter(author_id = following_uuid, follower_uuid = author_uuid).delete()
+
+        messages.add_message(request, messages.INFO, 'Removed friend successfully.')
+
+        return HttpResponseRedirect(next_url if next_url else success_url)
+
+
+@method_decorator(login_required, name = 'dispatch')
+class CreateFollowingView(generic.CreateView):
+
+    def get_queryset(self):
+        return Following.objects.none()
+
+    def post(self, request, *args, **kwargs):
+
+        author_uuid = request.user.author.uuid
+        following_uuid = request.POST.get('author_uuid')
+        next_url = request.POST.get('next')
+
+        # used as a backup in case next is not present
+        success_url = reverse_lazy('bettersocial:friends')
+
+        if not following_uuid:
+            messages.add_message(request, messages.ERROR, 'author_uuid not present!')
+
+        # Author now follows following_uuid, and following_uuid is being followed by author (both need to be present)
+        Following.objects.create(author_id = author_uuid, following_uuid = following_uuid)
+        Follower.objects.create(author_id = following_uuid, follower_uuid = author_uuid)
+
+        messages.add_message(request, messages.INFO, 'Friend added successfully.')
+
+        return HttpResponseRedirect(next_url if next_url else success_url)
