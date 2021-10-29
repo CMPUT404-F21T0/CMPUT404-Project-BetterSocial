@@ -1,14 +1,14 @@
-from .forms import CommentCreationForm, PostCreationForm
-from django.db.models import Q
-from django.views import generic
-from django.contrib.contenttypes.models import ContentType as DjangoContentType
-from django.contrib.auth.models import User
-from django.urls import reverse, reverse_lazy
-from django.shortcuts import render, redirect
-from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType as DjangoContentType
+from django.db.models import Q
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views import generic
 
 from bettersocial.models import Author, Follower, Following, Inbox, Post, Comment
+from .forms import CommentCreationForm, PostCreationForm
 
 
 class IndexView(generic.ListView):
@@ -82,7 +82,7 @@ class AddPostView(generic.CreateView):
 
     # Changes require in the future
     # The form itself has error message for the user if he / she does it incorrectly.
-    def post(self, request):
+    def post(self, request, **kwargs):
         form = PostCreationForm(request.POST, request.FILES)
 
         obj = form.save(commit = False)
