@@ -1,5 +1,23 @@
+hr {
+    margin-bottom: 0;
+}
+
 .iconify {
     color: rgb(64, 64, 64);
+}
+
+.image-container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-height: 600px;
+    width: 650px;
+}
+
+img {
+    height: auto;
+    object-fit: contain;
+    width: 650px;
 }
 
 p {
@@ -20,8 +38,24 @@ p {
     border: 1px rgb(64, 64, 64);
     border-style: solid none;
     min-height: 600px;
+    word-wrap: break-word;
 
 }
+
+.post-content {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15px;
+    width: 620px;
+}
+
+
+.post-description {
+    margin-bottom: 0;
+    margin-left: 15px;
+    margin-top: 0;
+}
+
 
 .post-footer .icon-text {
     margin-bottom: 6px;
@@ -29,23 +63,16 @@ p {
 
 .post-footer .right {
     gap: 10px;
+    margin: 0;
+    width: 325px;
 }
 
 .post-header {
+    display: flex;
+    flex-direction: row;
     font-size: 17px;
     height: 60px;
 }
-
-.post-title {
-    margin-left: 10px;
-}
-
-.post-description {
-    margin-left: 10px;
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
 
 .post-header .left {
     align-items: center;
@@ -54,7 +81,30 @@ p {
     gap: 10px;
     margin: 0;
     margin-left: 10px;
+    margin-right: 0px;
+    width: 325px;
+}
 
+.post-header .right {
+    gap: 10px;
+    margin: 0;
+    width: 325px;
+}
+
+.post-header .right a {
+    margin-right: 10px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.post-publisher {
+    margin-bottom: 10px;
+    margin-left: 15px;
+    margin-top: 5px;
+}
+.post-title {
+    margin: 15px 15px 0 15px;
 }
 
 .right {
@@ -62,7 +112,7 @@ p {
     display: flex;
     flex-direction: row;
     gap: 10px;
+    height: 50px;
     justify-content: flex-end;
     margin: 10px;
-    height: 50px;
 }
