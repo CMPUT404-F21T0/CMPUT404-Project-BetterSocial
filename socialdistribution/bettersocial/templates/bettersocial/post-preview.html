@@ -40,6 +40,9 @@
                 {% load markdown_extras %}
                 <div class="post-content">
                     <span>{{ post.content | markdown | safe }}</span>
+                    {% if post.image_content %}
+                        <img src="{{ post.image_content.url }}" width='600' height='400'>
+                    {% endif %}
                 </div>
             {% elif post.content_type == "image/jpeg;base64" or post.content_type == "image/png;base64" %}
                 <div class="image-container">
@@ -47,6 +50,9 @@
                 </div>
             {% elif post.content_type == "text/plain" %}
                 <div class="post-content">{{ post.content }}</div>
+                {% if post.image_content %}
+                    <img src="{{ post.image_content.url }}" width='600' height='400'>
+                {% endif %}
             {% endif %}
         </div>
 
