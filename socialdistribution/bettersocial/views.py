@@ -1,7 +1,8 @@
 from .forms import CommentCreationForm, PostCreationForm
-
 from django.db.models import Q
 from django.views import generic
+from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.contrib.auth.models import User
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import render, redirect
@@ -87,14 +88,15 @@ class AddCommentView(generic.CreateView):
         return reverse_lazy('bettersocial:article_details', kwargs={'pk': self.kwargs['pk']})
     
 @method_decorator(login_required, name = 'dispatch')
-class InboxView(generic.base.TemplateView):
-    model = Inbox     # should the model be this??
+class InboxView(generic.ListView):
+    model = Inbox
     template_name = 'bettersocial/inbox.html'
     context_object_name = 'inbox_items'
 
     def get_queryset(self):
         """Return all inbox items."""
-        return Inbox.objects.order_by('-published')
+        content_type = DjangoContentType.objects.get_for_model(model = Follower)
+        return Inbox.objects.filter(Q(dj_content_type=content_type))
 
 @method_decorator(login_required, name = 'dispatch')
 class StreamView(generic.ListView):
