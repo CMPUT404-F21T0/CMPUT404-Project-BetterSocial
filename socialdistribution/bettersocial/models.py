@@ -67,6 +67,17 @@ class Author(models.Model):
     def display_name(self) -> str:
         return f'{self.user.first_name} {self.user.last_name}'
 
+    @property
+    def friends_set(self):
+        following = { f.following_uuid for f in self.following_set.all() }
+        followers = { f.follower_uuid for f in self.follower_set.all() }
+
+        # TODO: 2021-10-28 refactor later
+        try:
+            return Author.objects.filter(uuid__in = followers & following)
+        except Author.DoesNotExist as e:
+            raise Author.DoesNotExist(f'A friend of author ({self.uuid}) could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
+
     def friends_with(self, author_uuid: UUID) -> bool:
         return self.following_set.filter(following_uuid = author_uuid).exists() and self.follower_set.filter(follower_uuid = author_uuid).exists()
 
