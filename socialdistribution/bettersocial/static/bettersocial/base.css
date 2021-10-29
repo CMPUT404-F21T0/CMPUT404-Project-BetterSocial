@@ -28,19 +28,26 @@ header {
     width: 100%;
 }
 
-.left {
-    display: flex;
-    flex-direction: row;
-    float: left;
-    margin-bottom: 0px;
+#home-button {
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 0;
     margin-top: 5px;
     margin-left: 25px;
 }
 
-.right {
-    align-items: flex-end;
+.flex-container {
     display: flex;
-    flex-direction: row-reverse;
+    align-items: stretch;
+    justify-content: flex-start;
+    flex-direction: row;
+}
+
+.flex-grow {
+    flex-grow: 1;
+}
+
+.header-item {
     font-size: 17px;
-    margin: 20px 25px 0px 20px;
+    margin: 20px 25px 0 20px;
 }
