@@ -35,6 +35,8 @@ class ProfileView(generic.base.TemplateView):
         else:
             context['author_following_user'] = Following.objects.filter(author=author_uuid, following_uuid=user_uuid)
             context['user_following_author']= Following.objects.filter(author=user_uuid, following_uuid=author_uuid)
+
+            # TODO: Might only need to have Public posts to be queried or publick and friends posts?
             context['posts'] = Post.objects.filter(
                 (Q(visibility = Post.Visibility.PUBLIC) & Q(author__uuid = author_uuid)) | 
                 (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = user_uuid) & Q(author__following__following_uuid = user_uuid)) | 
