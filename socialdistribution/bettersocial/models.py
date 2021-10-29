@@ -150,7 +150,7 @@ class Post(Likeable):
     # UUID of the Post object
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
-    author = models.ForeignKey(Author, default=None, on_delete = models.CASCADE)
+    author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Used to determine which author UUID the author of this post wants to send this post to. Does not mean anything unless the visibility is PRIVATE.
     recipient_uuid = models.UUIDField(null = True)
