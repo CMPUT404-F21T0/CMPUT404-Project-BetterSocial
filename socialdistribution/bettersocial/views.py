@@ -178,23 +178,20 @@ class PostLikesView(generic.ListView):
     # TODO: not sure how this would work for remote servers
     # should we add username to model too?
     def get_context_data(self, **kwargs):
-        context = super(PostLikesView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
+
         post_uuid = self.kwargs['pk']
         post = Post.objects.get(pk = post_uuid)
-        author_uuid = post.author.uuid
-        user_uuid = self.request.user.author.uuid
 
-        author_following_user = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
-        user_following_author = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
+        current_author = self.request.user.author
+        post_author = post.author
 
-        if author_following_user and user_following_author:
-            likes = post.like_set.filter(dj_object_uuid = post_uuid)
-            context['friends'] = True
-            context['likes'] = []
-            for like in likes:
-                context['likes'].append(Author.objects.get(pk = like.author_uuid))
+        if post.author == current_author or current_author.friends_with(post_author.uuid):
+            context['permitted'] = True
+            context['likes'] = post.like_set.all()
+            context['post'] = post
         else:
-            context['friends'] = False
+            context['permitted'] = False
 
         return context
 
