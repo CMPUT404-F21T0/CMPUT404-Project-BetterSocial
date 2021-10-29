@@ -12,19 +12,32 @@
             </div>
 
             <div class="profile-info">
-                    <h1> {{ current_user.display_name }}</h1>
-                    {{ current_user.user.username }}
-                    <!-- <p>Email: johndoe@gmail.com</p> -->
-                    <p>Github: <a href="{{ current_user.user.github_url }}">{{ current_user.user.github_url }}</a></p>
+                    <h1> {{ author.display_name }}</h1>
+                    <p>{{ author.user.username }}</p>
+                    {% if author.user.email %}
+                        <p> Email: {{ author.user.email }}</p>
+                    {% endif %}
+
+                    {% if author.github_url %}
+                        <p>Github: <a href="{{ current_user.user.github_url }}">{{ author.github_url }}</a></p>
+                    {% endif %}
                     <!-- <p>Bio: This is a John Doe's bio</p> -->
             </div>
+
             <!-- TODO: connect friends list to friend button -->
             <div class="profile-friend-btn">
                 <button>Friends</button>
-                {% if user.author.uuid == current_user.uuid %}
+                <!-- TODO: connect edit profile button -->
+                {% if user.author.uuid == author.uuid %}
                     <button>Edit Profile</button>
-                <!-- TODO: if user alreading following? show unfollow -->
+                <!-- TODO: connect unfriend button -->
+                {% elif author_following_user and user_following_author %}
+                    <button>Unfriend</button>
+                {% elif following %}
+                <!-- TODO: connect unfollow button -->
+                    <button>Unfollow</button>
                 {% else %}
+                <!-- TODO: connect follow button -->
                     <button>Follow</button>
                 {% endif %}
             </div>
@@ -35,18 +48,15 @@
         <div class="profile-post">
             <div class="post-header">
                 <!-- TODO: add if user has profile pic show pic if not show icon -->
-                <!-- TODO: should change href to user profile link -->
                 <div class="left">
                     <a href="{% url 'bettersocial:profile' post.author.uuid %}">
                         <span class="iconify" data-icon="iconoir:profile-circled" data-width="42" data-height="42"></span>
                     </a>
-                    <!-- TODO: should change href to user profile link -->
                     <a href="{% url 'bettersocial:profile' post.author.uuid %}">
                         <h3>{{ post.author.user.username }}</h3>
                     </a>
                 </div>
 
-                <!-- TODO: change the link to be dynamically added and href -->
                 <div class="right">
                     <p>{{post.published}}</p>
                     <!-- is it source or origin? -->
@@ -55,10 +65,11 @@
             </div>
 
             
-            <!-- TODO: add logic for content-type of post -->
+            <!-- TODO: add logic for content-type of post text/img/markdown -->
             <div class="post-container">
-                <h2>{{post.title}}</h2>
-                <p>{{post.description}}</p>
+                <h2 class="post-title">{{post.title}}</h2>
+                <p class="post-description"> {{post.description}}</p>
+                <hr>
                 {{ post.content }}
             </div>
 
@@ -79,7 +90,7 @@
                     <a href="">
                         <span class="iconify" data-icon="ant-design:comment-outlined" data-width="30" data-height="30"></span>
                     </a>
-                <a class="icon-text" href="">Comments</a>
+                <a class="icon-text" href="">{{post.comments}}Comment{{post.comments|pluralize}}</a>
             </div>
 
         {% endfor %}

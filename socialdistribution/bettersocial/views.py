@@ -16,23 +16,31 @@ class IndexView(generic.base.TemplateView):
         return User.objects.all()
 
 @method_decorator(login_required, name = 'dispatch')
-class ProfileView(generic.ListView):
+class ProfileView(generic.base.TemplateView):
     model = Author
     template_name = 'bettersocial/profile.html'
     context_object_name = "current_user"
 
     def get_context_data(self, **kwargs):
-        author_uuid = self.kwargs["uuid"]    
         context = super(ProfileView, self).get_context_data(**kwargs)
-        # Shows all the posts of the current logged in user
-        # not sure how to handle a user viewing a different user's profile
-        # TODO: fix this so it queries public/friend post
-        context['posts'] = Post.objects.filter(author__uuid = author_uuid)
+        # author is the owner of the page we're looking at 
+        # user is the logged in user
+        author_uuid = self.kwargs['uuid']
+        author = Author.objects.filter(uuid = author_uuid).prefetch_related('post_set').get()
+        context['author'] = author
+        user_uuid = self.request.user.author.uuid
+        
+        if author_uuid == user_uuid:
+            context['posts'] = author.post_set.all()
+        else:
+            context['author_following_user'] = Following.objects.filter(author=author_uuid, following_uuid=user_uuid)
+            context['user_following_author']= Following.objects.filter(author=user_uuid, following_uuid=author_uuid)
+            context['posts'] = Post.objects.filter(
+                (Q(visibility = Post.Visibility.PUBLIC) & Q(author__uuid = author_uuid)) | 
+                (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = user_uuid) & Q(author__following__following_uuid = user_uuid)) | 
+                (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = user_uuid))).order_by('-published')
+        
         return context
-
-    def get_queryset(self):
-        uuid = self.kwargs["uuid"]        
-        return Author.objects.get(uuid = uuid)
 
 @method_decorator(login_required, name = 'dispatch')
 class InboxView(generic.base.TemplateView):
