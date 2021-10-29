@@ -5,6 +5,19 @@ CMPUT 404 Fall 2021 Group Project
 
 NOTE: Python 3.9.x is recommended.
 
+⚠️ 3.10.x may not work properly.
+
+### Note about Postgres
+
+The production build on Heroku is using Postgres, while the development build is using SQLite.
+
+Despite this, the `psycopg2-binary` package may complain that postgres is not present, when installing requirements. In that case, install Postgres via your favorite package manager.
+
+Example,  macOS:
+```shell
+brew install postgresql
+```
+
 ### Virtual Environment (`virtualenv`)
 
 Create your Python3 virtual environment:
@@ -56,6 +69,15 @@ Start the development server:
 
 ```console
 python3 manage.py runserver
+```
+
+## Running Tests
+```console
+cd socialdistribution/
+```
+
+```console
+python3 manage.py test
 ```
 
 ## External Sources
