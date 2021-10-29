@@ -1,11 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
-from django.http import HttpResponseRedirect
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -14,12 +10,6 @@ from django.views import generic
 
 from bettersocial.models import Author, Follower, Following, Inbox, Post, Comment
 from .forms import CommentCreationForm, PostCreationForm
-
-
-@method_decorator(login_required, name = 'dispatch')
-class IndexView(generic.ListView):
-    model = Post
-    template_name = 'bettersocial/index.html'
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -183,7 +173,7 @@ class PostLikesView(generic.ListView):
     model = Post
     template_name = 'bettersocial/list_of_likes.html'
 
-    # TODO: not sure how this would work for remote servers 
+    # TODO: not sure how this would work for remote servers
     # should we add username to model too?
     def get_context_data(self, **kwargs):
         context = super(PostLikesView, self).get_context_data(**kwargs)
@@ -203,7 +193,7 @@ class PostLikesView(generic.ListView):
                 context['likes'].append(Author.objects.get(pk=like.author_uuid))
         else:
             context['friends'] = False
-    
+
         return context
 
 
