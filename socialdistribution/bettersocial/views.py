@@ -13,6 +13,7 @@ from bettersocial.models import Author, Follower, Following, Inbox, Post, Commen
 from .forms import CommentCreationForm, PostCreationForm
 
 
+@method_decorator(login_required, name = 'dispatch')
 class IndexView(generic.ListView):
     model = Post
     template_name = 'bettersocial/index.html'
