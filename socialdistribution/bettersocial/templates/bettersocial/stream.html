@@ -37,16 +37,14 @@
                 <hr>
                
                 {% if post.content_type == "application/base64" %}
+                <!-- TODO: not really sure what to do here  -->
                   <div class="post-content"> {{post.content}}</div>
 
                 {% elif post.content_type == "text/markdown" %}
-                  
-                  <!-- <div class="post-content note" markdown="1">{{post.content}}</div> -->
-                  <!-- TODO: not sure how to handle this might need to create a template filter -->
-                  {% autoescape on %}
-                    <span style="display:block" class="note" >{{post.content | safe}}</span>
-                  {% endautoescape %}
-
+                  {% load markdown_extras %}
+                  <div class="post-content">
+                    <span>{{post.content| markdown | safe}}</span>
+                  </div>
                 {% elif post.content_type == "image/jpeg;base64" or post.content_type == "image/png;base64" %}
                   <div class="image-container">
                   <img  id='base64image' src='data:{{post.content_type}}, {{post.content}}' />

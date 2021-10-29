@@ -118,3 +118,7 @@ img {
 hr {
     margin-bottom: 0;
 }
+
+.post-markdown {
+    background-color: blue;
+}

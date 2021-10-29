@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'bettersocial',
     'users',
     'api',
-    'django_extensions'
+    'django_extensions',
+    'md.apps.MdConfig',
 ]
 
 MIDDLEWARE = [
