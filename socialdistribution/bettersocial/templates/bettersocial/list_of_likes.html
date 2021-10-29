@@ -1,0 +1,17 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+    <h1>Viewing likes</h1>
+    {% if friends == True %}
+    <ul>
+        {% for author in likes %}
+        <li>
+            {{like.author.username}}
+            {{ author.user.username }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+        You must be friends with the author to view likes
+    {% endif %}
+
+{% endblock %}
