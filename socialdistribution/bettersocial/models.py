@@ -207,10 +207,10 @@ class Comment(models.Model):
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
     # Comment belongs to a post
-    post = models.ForeignKey(Post, related_name = "comments",on_delete = models.CASCADE) # related_name = "comments"
+    post = models.ForeignKey(Post, related_name = "comments",on_delete = models.CASCADE)
 
     # Should ideally be a FK BUT since foreign comments would be stored in this database (i.e. would be POSTed from another server), it could be violated -- because we don't store foreign users here. So it is more of a soft-FK via uuid
-    author_uuid = models.UUIDField() #models.ForeignKey(Author, default=None, on_delete = models.CASCADE) #
+    author_uuid = models.UUIDField()
 
     # Reuse the same choices as post. Although TODO: 2021-10-21 image types may be rejected, that is TBD
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
@@ -230,7 +230,7 @@ class Comment(models.Model):
         return ContentType[self.content_type]
 
     def __str__(self):
-        #author = Author.objects.get(uuid=self.author_uuid)
+        # TODO: 2021-10-28 query local authors display name through author uuid, for remote authors TBD
         return str(self.post.title) + ' | ' + str(self.author_username) 
 
 

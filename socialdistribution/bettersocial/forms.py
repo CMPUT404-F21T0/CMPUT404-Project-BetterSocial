@@ -9,6 +9,7 @@ class PostCreationForm(ModelForm):
         # More fields can be added
         fields = ['title',
                   'description', 
+                  'content',
                   'visibility',
                   'header_image']
 
