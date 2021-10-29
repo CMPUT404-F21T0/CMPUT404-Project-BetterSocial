@@ -189,7 +189,7 @@ class Post(Likeable):
 
 
 
-class Comment(models.Model):
+class Comment(Likeable):
     """Represents a comment on a post on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
     type = "Comment"
