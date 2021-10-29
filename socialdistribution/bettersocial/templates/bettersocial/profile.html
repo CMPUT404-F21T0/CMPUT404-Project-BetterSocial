@@ -89,17 +89,17 @@
                     </a>
                 <a class="icon-text" href="">Share Post</a>
                     <!-- TODO: Edit href for share likes and dynamically add number of likes -->
+                    <!-- TODO: Edit thumbs up icon to like the post -->
                     <!-- TODO: Pluralize likes  -->
                     <a href="">
                         <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
                     </a>
-                <a class="icon-text" href="">Likes</a>
-                    <!-- TODO: Edit href for comments and dynamically add number of comments -->
-                    <!-- TODO: Pluralize comments  -->
-                    <a href="">
-                        <span class="iconify" data-icon="ant-design:comment-outlined" data-width="30" data-height="30"></span>
-                    </a>
-                <a class="icon-text" href="">{{post.comments}}Comment{{post.comments|pluralize}}</a>
+                <a class="icon-text" href="{% url 'bettersocial:post_likes_list' post.uuid %}"> Likes</a>
+
+                <a href="{% url 'bettersocial:article_details' post.uuid %}">
+                    <span class="iconify" data-icon="ant-design:comment-outlined" data-width="30" data-height="30"></span>
+                </a>
+                <a class="icon-text" href="{% url 'bettersocial:article_details' post.uuid %}"> {{post.comments.all | length }} Comment{{post.comments.all | length | pluralize }}</a>
             </div>
 
         {% endfor %}
