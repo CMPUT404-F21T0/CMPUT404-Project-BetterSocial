@@ -30,10 +30,31 @@
                 <h2 class="post-title">{{post.title}}</h2>
                 <h4 class="post-publisher">By: {{post.author.display_name}}</h4>
                 <p class="post-description"> {{post.description}}</p>
+                <!-- remove this -->
+                {{ post.content_type }}
+                {{ post.uuid }}
+                <!-- remove this -->
                 <hr>
-                <div class="post-content">
-                  {{post.content}}
-                </div>
+               
+                {% if post.content_type == "application/base64" %}
+                  <div class="post-content"> {{post.content}}</div>
+
+                {% elif post.content_type == "text/markdown" %}
+                  
+                  <!-- <div class="post-content note" markdown="1">{{post.content}}</div> -->
+                  <!-- TODO: not sure how to handle this might need to create a template filter -->
+                  {% autoescape on %}
+                    <span style="display:block" class="note" >{{post.content | safe}}</span>
+                  {% endautoescape %}
+
+                {% elif post.content_type == "image/jpeg;base64" or post.content_type == "image/png;base64" %}
+                  <div class="image-container">
+                  <img  id='base64image' src='data:{{post.content_type}}, {{post.content}}' />
+                  </div>
+                {% elif post.content_type == "text/plain" %}
+                  <div class="post-content">{{post.content}}</div>
+                {% endif %}
+                <!-- </div> -->
             </div>
 
             <div class="post-footer right">
@@ -58,21 +79,6 @@
 
         </div>
     {% endfor %}
-<!-- <div
-	class="stream"
-	style="display: flex; flex-direction: column; overflow: hidden"
->
-	{% for post in object_list %}
-    <div class="post" style="">
-      <h2>Post</h2>
-      <p>Author: {{post.author.display_name}}</p>
-      <p>Title: {{post.title}}</p>
-      <p>Description: {{post.description}}</p>
-      <p>Content: {{post.content}}</p>
-      <p>Published: {{post.published}}</p>
-    </div>
-	{% endfor %}
-</div> -->
 {% else %}
 <p>No posts in stream.</p>
 {% endif %} 

@@ -99,3 +99,22 @@ p {
     margin: 10px;
     height: 50px;
 }
+
+.image-container {
+    width: 650px;
+    min-height: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+img {
+    width: 650px;
+    height: auto;
+    object-fit: contain;
+    
+}
+
+hr {
+    margin-bottom: 0;
+}
