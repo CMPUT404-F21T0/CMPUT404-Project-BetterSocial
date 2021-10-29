@@ -1,0 +1,30 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+    <h1>Viewing Post</h1>
+    <h1>{{ post.title }}</h1>
+    <small> By: {{ post.author.user.first_name }} {{ post.author.user.last_name }}</small>
+    <hr/>
+    <br/>
+    {% csrf_token %}
+    {{post.content}}
+    <br/>
+    <br/>
+    <br/> 
+    <h1>Comment Section:</h1>
+    {% if not comments %} 
+        No comments... <a href="{% url 'bettersocial:add_comment' post.pk %}">Add first comment!</a>
+    {% else %} 
+        <a href="{% url 'bettersocial:add_comment' post.pk %}">Add comment!</a>
+        <br/>
+        <br/>
+        {% for comment in comments %}
+            <strong>{{ comment.author_username }} -  {{ comment.published }}</strong>
+            <br/>
+            {{ comment.comment }}
+            <hr/>
+            <br/>
+            <br/>
+        {% endfor %}
+    {% endif %}
+
+{% endblock %}

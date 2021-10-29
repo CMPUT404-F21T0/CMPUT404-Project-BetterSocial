@@ -1,0 +1,16 @@
+{% extends 'bettersocial/base.html' %} {% block content %} {% if object_list %}
+<div
+	class="inbox"
+	style="display: flex; flex-direction: column; overflow: hidden"
+>
+	{% for inbox_object in object_list %}
+	<div class="inbox_obj">
+		<h1>Follower Request</h1>
+		<p>New follow request from {{inbox_object.author.display_name}}</p>
+	</div>
+
+	{% endfor %}
+</div>
+{% else %}
+<p>No items in inbox.</p>
+{% endif %} {% endblock %}

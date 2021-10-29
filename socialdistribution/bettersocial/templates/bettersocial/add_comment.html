@@ -1,0 +1,27 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+    <h1>Comment on a Post</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <!-- Fields can be expanded {{ form.field.value|default_if_none:"" }}-->
+        <table>
+            <tr>
+                <td>{{ form.author_uuid.label_tag }}</td>
+                <td>{{ form.author_uuid }}</td>
+            </tr>
+            <tr>
+                <td>{{ form.author_username.label_tag }}</td>
+                <td>{{ form.author_username }}</td>
+            </tr>
+            <tr>
+                <td>{{ form.comment.label_tag }}</td>
+                <td>{{ form.comment }}</td>
+            </tr>
+        </table>
+
+        </br></br>
+        <button>Add Comment</button>
+    </form>
+
+{% endblock %}

@@ -1,0 +1,55 @@
+input[type="radio"] {
+    visibility: hidden;
+    height: 0;
+    width: 0;
+    left: -999em;
+    position: absolute;
+
+}
+
+input[type="radio"]:checked + label {
+    background-color: rgb(220, 222, 225);
+}
+
+.button {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    border: solid rgb(64, 64, 64);
+    background-color: transparent;
+    padding: 5pt 10pt;
+    border-radius: 5px;
+}
+
+.button:hover {
+    background-color: rgb(236, 238, 238);
+}
+
+.grid-wrapper {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8pt 10pt;
+    align-items: center;
+    justify-items: center;
+}
+
+.grid-item {
+    /*grid-column;*/
+}
+
+.grid-span-3 {
+    grid-column: span 3;
+}
+
+.grid-left {
+    justify-self: left;
+}
+
+.grid-rule {
+    grid-column: span 5;
+    border: 1pt solid black;
+    background-color: black;
+    justify-self: stretch;
+}
+
+

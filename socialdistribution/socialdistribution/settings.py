@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 import django_on_heroku
@@ -31,7 +32,7 @@ ALLOWED_HOSTS = []
 # Authentication Settings
 
 LOGIN_URL = '/users/login'
-LOGIN_REDIRECT_URL = '/profile'
+LOGIN_REDIRECT_URL = '/'
 
 # Application definition
 
@@ -42,8 +43,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'bettersocial',
     'users',
+    'api',
+    'django_extensions',
+    'md.apps.MdConfig',
 ]
 
 MIDDLEWARE = [
@@ -75,6 +80,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'socialdistribution.wsgi.application'
+
+# Rest Framework
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -122,10 +137,14 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# Media Image Files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Overrides settings using the ones from Heroku
-django_on_heroku.settings(locals())
+django_on_heroku.settings(locals(), test_runner = False)

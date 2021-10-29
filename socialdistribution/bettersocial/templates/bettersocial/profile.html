@@ -1,14 +1,64 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
+    {% load static %}
+    <!-- Style Sheet and References -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/profile.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}">
 
-    <h2>Profile Stub!</h2>
-    <table>
-        <tr>
-            <td><b>Username:</b> {{ user.username }}</td>
-        </tr>
-        <tr>
-            <td><b>Full Name:</b> {{ user.first_name }} {{ user.last_name }}</td>
-        </tr>
-    </table>
+    <div class="profile">
+        <div class="profile-header">
+            <div class="profile-pic">
+                <span class="iconify" data-icon="healthicons:ui-user-profile-outline" data-width="150"
+                      data-height="150"></span>
+            </div>
 
+            <div class="profile-info">
+                <h1> {{ author.display_name }}</h1>
+                <p>{{ author.user.username }}</p>
+                {% if author.user.email %}
+                    <p> Email: {{ author.user.email }}</p>
+                {% endif %}
+
+                {% if author.github_url %}
+                    <p>Github: <a href="{{ current_user.user.github_url }}">{{ author.github_url }}</a></p>
+                {% endif %}
+                <!-- <p>Bio: This is a John Doe's bio</p> -->
+            </div>
+
+            <!-- TODO: connect friends list to friend button -->
+            <div class="profile-friend-btn">
+                <button>Friends</button>
+                <!-- TODO: connect edit profile button -->
+                {% if user.author.uuid == author.uuid %}
+                    <button>Edit Profile</button>
+                    <!-- TODO: connect unfriend button -->
+                {% elif author_following_user and user_following_author %}
+                    <form action="{% url 'bettersocial:profile_action' author.uuid 'unfollow' %}" method="post">
+                        {% csrf_token %}
+                        <button>Unfriend</button>
+                    </form>
+                {% elif user_following_author %}
+                    <!-- TODO: connect unfollow button -->
+                    <form action="{% url 'bettersocial:profile_action' author.uuid 'unfollow' %}" method="post">
+                        {% csrf_token %}
+                        <button>Unfollow</button>
+                    </form>
+                {% else %}
+                    <!-- TODO: connect follow button -->
+                    <form action="{% url 'bettersocial:profile_action' author.uuid 'follow' %}" method="post">
+                        {% csrf_token %}
+                        <button>Follow</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+
+        {% for post in posts %}
+
+            {% include 'bettersocial/post-preview.html' %}
+
+        {% endfor %}
+
+    </div>
 {% endblock %}

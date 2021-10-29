@@ -1,0 +1,18 @@
+.container {
+    
+    padding: 20px;
+    border-radius: 5px;
+    background-color: #f2f2f2;
+}
+
+.size-25 {
+    width: 25%;
+    float: left;
+    margin-top: 6px;
+}
+
+.size-75 {
+    width: 75%;
+    float: left;
+    margin-top: 6px;
+}

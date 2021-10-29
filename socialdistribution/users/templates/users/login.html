@@ -1,31 +1,42 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
+    {% load static %}
+    <!-- Style Sheet and References -->
+    <link rel="stylesheet" type="text/css" href="{% static 'users/login.css' %}">
+    <div class="login">
 
-    <h2>Login</h2>
+        <div class="login-header">
+            <h1>Login</h1>
+        </div>
 
-    {% if form.errors %}
-        <p style="color: red">Incorrect username or password. Please try again.</p>
-    {% endif %}
+        <div class="login-form">
+            {% if form.errors %}
+                <p style="color: red">Incorrect username or password. Please try again.</p>
+            {% endif %}
 
-    {% include 'bettersocial/messages.html' %}
+            {% include 'bettersocial/messages.html' %}
 
-    <form method="post" action="{% url 'users:login' %}">
-        {% csrf_token %}
+            <form method="post" action="{% url 'users:login' %}">
+                {% csrf_token %}
 
-        <table>
-            <tr>
-                <td>{{ form.username.label_tag }}</td>
-                <td>{{ form.username }}</td>
-            </tr>
-            <tr>
-                <td>{{ form.password.label_tag }}</td>
-                <td>{{ form.password }}</td>
-            </tr>
-        </table>
-
-        <input type="submit" value="Login">
-        <input type="hidden" name="next" value="{{ next }}">
-
-    </form>
+                <table>
+                    <tr>
+                        <td>{{ form.username.label_tag }}</td>
+                        <td>{{ form.username }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ form.password.label_tag }}</td>
+                        <td >{{ form.password }}</td>
+                    </tr>
+                </table>    
+                <!-- TODO: Connect Remember Me to cookies? -->
+                <div class="submit-box">
+                    <input class="box" type="checkbox" value="Remember"> Remember Me?</input>
+                    <input class="login-button" type="submit" value="Login">
+                    <input type="hidden" name="next" value="{{ next }}">
+                </div>
+            </form>
+        </div>
+    </div>
 
 {% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+    <h1>Viewing likes</h1>
+    {% if permitted == True %}
+        {% if likes %}
+            <ul>
+                {% for like in likes %}
+                    <li>
+                        <a href="{% url 'bettersocial:profile' like.author_local.pk %}">{{ like.author_local.display_name }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>There are no likes on this post.</p>
+        {% endif %}
+    {% else %}
+        <p>You must be friends with the author to view likes!</p>
+    {% endif %}
+
+{% endblock %}

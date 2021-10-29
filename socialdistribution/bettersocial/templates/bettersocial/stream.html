@@ -1,0 +1,18 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+
+    {% load static %}
+    <!-- Style Sheet and References -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/stream.css' %}">
+
+    {% if stream_items %}
+
+        {% for post in stream_items %}
+            {% include 'bettersocial/post-preview.html' %}
+        {% endfor %}
+
+    {% else %}
+        <p>No posts in stream.</p>
+    {% endif %}
+
+{% endblock %}
