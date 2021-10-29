@@ -1,7 +1,9 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -160,7 +162,58 @@ class FollowersView(generic.TemplateView):
         friends_set = { a for a in author.friends_set.all() }
 
         # Friend requests are any author that is NOT currently a friend and ALSO follows the current author
-        context['friend_request_list'] = follower_set ^ friends_set
-        context['friends_list'] = friends_set
+        context['friend_request_list'] = [(author, str(author.uuid)) for author in follower_set ^ friends_set]
+        context['friends_list'] = [(author, str(author.uuid)) for author in friends_set]
 
         return context
+
+
+class DeleteFollowingView(generic.DeleteView):
+
+    def get_queryset(self):
+        return Following.objects.none()
+
+    def delete(self, request, *args, **kwargs):
+        author_uuid = request.user.author.uuid
+        following_uuid = request.POST.get('author_uuid')
+        next_url = request.POST.get('next')
+
+        # used as a backup in case next is not present
+        success_url = reverse_lazy('bettersocial:friends')
+
+        if not following_uuid:
+            messages.add_message(request, messages.ERROR, 'author_uuid not present!')
+
+        # Have to delete both relations (each row is from a different user perspective)
+        Following.objects.filter(author_id = author_uuid, following_uuid = following_uuid).delete()
+        Follower.objects.filter(author_id = following_uuid, follower_uuid = author_uuid).delete()
+
+        messages.add_message(request, messages.INFO, 'Removed friend successfully.')
+
+        return HttpResponseRedirect(next_url if next_url else success_url)
+
+
+class CreateFollowingView(generic.CreateView):
+
+    def get_queryset(self):
+        return Following.objects.none()
+
+    def post(self, request, *args, **kwargs):
+
+        author_uuid = request.user.author.uuid
+        following_uuid = request.POST.get('author_uuid')
+        next_url = request.POST.get('next')
+
+        # used as a backup in case next is not present
+        success_url = reverse_lazy('bettersocial:friends')
+
+        if not following_uuid:
+            messages.add_message(request, messages.ERROR, 'author_uuid not present!')
+
+        # Author now follows following_uuid, and following_uuid is being followed by author (both need to be present)
+        Following.objects.create(author_id = author_uuid, following_uuid = following_uuid)
+        Follower.objects.create(author_id = following_uuid, follower_uuid = author_uuid)
+
+        messages.add_message(request, messages.INFO, 'Friend added successfully.')
+
+        return HttpResponseRedirect(next_url if next_url else success_url)

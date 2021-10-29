@@ -1,9 +1,8 @@
-from django.conf.urls import url
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path
 
 from . import views
-from django.conf import settings
-from django.conf.urls.static import static
 
 app_name = 'bettersocial'
 
@@ -18,4 +17,8 @@ urlpatterns = [
     path('inbox/', views.InboxView.as_view(), name = 'inbox'),
     path('stream/', views.StreamView.as_view(), name = 'stream'),
     path('friends/', views.FollowersView.as_view(), name = 'friends'),
-] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
+    path('delete-following/', views.DeleteFollowingView.as_view(), name = 'delete_following'),
+    path('add-following/', views.CreateFollowingView.as_view(), name = 'add_following'),
+]
+
+urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
