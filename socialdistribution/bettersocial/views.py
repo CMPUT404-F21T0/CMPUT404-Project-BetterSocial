@@ -20,7 +20,7 @@ class ArticleDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(ArticleDetailView, self).get_context_data(**kwargs)
         post_uuid = self.kwargs['pk']
-        post = Post.objects.get(pk=post_uuid)
+        post = Post.objects.get(pk = post_uuid)
         author_uuid = post.author.uuid
         user_uuid = self.request.user.author.uuid
 
@@ -29,10 +29,10 @@ class ArticleDetailView(generic.DetailView):
             return context
 
         # finding author's friends (excluding the user) in order to hide author's friend's comments from user
-        author_following = Following.objects.filter(Q(author=author_uuid) & ~Q(following_uuid=user_uuid)).values_list("following_uuid")
-        author_followers = Following.objects.filter(Q(following_uuid=author_uuid) & ~Q(author=user_uuid)).values_list("author__uuid")
+        author_following = Following.objects.filter(Q(author = author_uuid) & ~Q(following_uuid = user_uuid)).values_list("following_uuid")
+        author_followers = Following.objects.filter(Q(following_uuid = author_uuid) & ~Q(author = user_uuid)).values_list("author__uuid")
         friends_to_hide = author_following.intersection(author_followers)
-        context["comments"] = (post.comments.all().exclude(author_uuid__in=friends_to_hide))
+        context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
         return context
 
 
@@ -162,10 +162,12 @@ class StreamView(generic.ListView):
     def get_queryset(self):
         """Return all post objects."""
         author_uuid = self.request.user.author.uuid
+
         return Post.objects.filter(
             (Q(visibility = Post.Visibility.PUBLIC)) |
             (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author_uuid) & Q(author__following__following_uuid = author_uuid)) |
-            (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author_uuid))).order_by('-published')
+            (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author_uuid))
+        ).distinct().order_by('-published')
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -178,19 +180,19 @@ class PostLikesView(generic.ListView):
     def get_context_data(self, **kwargs):
         context = super(PostLikesView, self).get_context_data(**kwargs)
         post_uuid = self.kwargs['pk']
-        post = Post.objects.get(pk=post_uuid)
+        post = Post.objects.get(pk = post_uuid)
         author_uuid = post.author.uuid
         user_uuid = self.request.user.author.uuid
 
-        author_following_user = bool(Following.objects.filter(author=author_uuid, following_uuid=user_uuid))
-        user_following_author= bool(Following.objects.filter(author=user_uuid, following_uuid=author_uuid))
+        author_following_user = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
+        user_following_author = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
 
         if author_following_user and user_following_author:
-            likes = post.like_set.filter(dj_object_uuid=post_uuid)
+            likes = post.like_set.filter(dj_object_uuid = post_uuid)
             context['friends'] = True
             context['likes'] = []
             for like in likes:
-                context['likes'].append(Author.objects.get(pk=like.author_uuid))
+                context['likes'].append(Author.objects.get(pk = like.author_uuid))
         else:
             context['friends'] = False
 
