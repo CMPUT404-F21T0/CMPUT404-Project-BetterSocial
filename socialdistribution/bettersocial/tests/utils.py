@@ -156,3 +156,10 @@ def create_test_inbox_entry(
         dj_content_type = dj_content_type,
         object = inbox_object
     )
+
+
+def add_local_following(author: Author, author_following: Author):
+    """`author` follows `author_following`. Reverse the authors in the parameters to construct the opposite relation"""
+
+    Following.objects.create(author = author, following_uuid = author_following.uuid)
+    Follower.objects.create(author = author_following, follower_uuid = author.uuid)
