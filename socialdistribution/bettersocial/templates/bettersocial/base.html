@@ -22,10 +22,18 @@
             <h1><a href="{% url 'bettersocial:index' %}">BetterSocial</a></h1>
         </div>
 
+        {% if user.is_authenticated %}
+            <div class="header-item">
+                <a class="inbox-button"
+                   href="{% url 'bettersocial:inbox' %}">Inbox</a>
+            </div>
+        {% endif %}
 
-        <div class="header-item">
-            <a class="friends-button" href="{% url 'bettersocial:friends' %}">Friends</a>
-        </div>
+        {% if user.is_authenticated %}
+            <div class="header-item">
+                <a class="friends-button" href="{% url 'bettersocial:friends' %}">Friends</a>
+            </div>
+        {% endif %}
 
         {% if user.is_authenticated %}
             <div class="header-item">
@@ -43,6 +51,7 @@
                 <a type="button" style="padding: 5pt;" href="{% url 'users:register' %}">Register</a>
             {% endif %}
         </div>
+
     </div>
 </header>
 
