@@ -1,0 +1,82 @@
+{# `post`, and `user` must be available. #}
+{% if post %}
+    {% load static %}
+    <!-- Style Sheet and References -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/post-preview.css' %}">
+    <div class="post">
+        <div class="post-header">
+            <!-- TODO: add if user has profile pic show pic if not show icon -->
+            <div class="left">
+                <a href="{% url 'bettersocial:profile' post.author.uuid %}">
+                        <span class="iconify" data-icon="iconoir:profile-circled" data-width="42"
+                              data-height="42"></span>
+                </a>
+                <a href="{% url 'bettersocial:profile' post.author.uuid %}">
+                    <h3>{{ post.author.user.username }}</h3>
+                </a>
+            </div>
+
+            <!-- TODO: not sure if this should be source or origin -->
+            <div class="post-header right">
+                <p>{{ post.published }}&nbsp;</p>
+                {# TODO: Add back when source and origin are actually filled in #}
+                {# <a href="{{post.source}}">{{post.source}}</a> #}
+            </div>
+        </div>
+
+        <div class="post-container">
+            <h2 class="post-title">{{ post.title }}</h2>
+            <h4 class="post-publisher">By: {{ post.author.display_name }}</h4>
+            <p class="post-description"> {{ post.description }}</p>
+            <hr>
+
+            {% if post.content_type == "application/base64" %}
+                <!-- TODO: not really sure what to do here  -->
+                <div class="post-content"> {{ post.content }}</div>
+
+            {% elif post.content_type == "text/markdown" %}
+                {% load markdown_extras %}
+                <div class="post-content">
+                    <span>{{ post.content | markdown | safe }}</span>
+                </div>
+            {% elif post.content_type == "image/jpeg;base64" or post.content_type == "image/png;base64" %}
+                <div class="image-container">
+                    <img id='base64image' src='data:{{ post.content_type }}, {{ post.content }}'/>
+                </div>
+            {% elif post.content_type == "text/plain" %}
+                <div class="post-content">{{ post.content }}</div>
+            {% endif %}
+        </div>
+
+        <div class="post-footer right">
+            {% if user.author.uuid == post.author.uuid %}
+                <a class="icon-text" href="{% url 'bettersocial:edit_post' post.pk %}">Edit</a>
+                <a class="icon-text" href="{% url 'bettersocial:delete_post' post.pk %}">Delete</a>
+            {% endif %}
+
+            <!-- TODO: Edit href for share post -->
+            <a href="">
+                <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
+            </a>
+            <a class="icon-text" href="">Share Post</a>
+            <!-- TODO: Edit href for share likes and dynamically add number of likes -->
+            <!-- TODO: Pluralize likes  -->
+            <a href="">
+                <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
+            </a>
+            <a class="icon-text" href="{% url 'bettersocial:post_likes_list' post.pk %}">Likes</a>
+            <!-- TODO: Edit href for comments and dynamically add number of comments -->
+            <!-- TODO: Pluralize comments  -->
+            <a href="">
+                    <span class="iconify" data-icon="ant-design:comment-outlined" data-width="30"
+                          data-height="30"></span>
+            </a>
+            <a class="icon-text"
+               href="{% url 'bettersocial:article_details' post.pk %}"> {{ post.comments.all | length }}
+                Comment{{ post.comments.all | length | pluralize }}</a>
+        </div>
+
+    </div>
+{% else %}
+    <p>You must include `post` in the namespace!</p>
+{% endif %}
