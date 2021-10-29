@@ -48,6 +48,6 @@ jobs:
           heroku_app_name: cmput404-bettersocial
           dontautocreate: true
 
-          # Health check parameters
-          healthcheck: https://cmput404-bettersocial.herokuapp.com/
+          # Health check parameters, checks url for 200 OK
+          healthcheck: https://cmput404-bettersocial.herokuapp.com/users/login/
           delay: 5
