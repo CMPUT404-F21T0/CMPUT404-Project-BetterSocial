@@ -1,6 +1,7 @@
 import uuid as uuid
 from uuid import UUID
 
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
@@ -303,8 +304,12 @@ class Inbox(models.Model):
 # -- Utility -- #
 
 
-class Node(models.Model):
-    """A bidirectional connection between this server and another."""
+class Node(AbstractBaseUser):
+    """A bidirectional connection between this server and another. Subclasses AbstractBaseUser since we kind of use it as a user object."""
+
+    # Unsets fields from AbstractBaseUser
+    password = None
+    last_login = None
 
     host = models.CharField(max_length = 255, unique = True)
 
@@ -322,6 +327,38 @@ class Node(models.Model):
     class Meta:
         verbose_name = 'Node'
         verbose_name_plural = 'Nodes'
+
+    def get_username(self):
+        return self.host
+
+    def clean(self):
+        pass
+
+    def set_password(self, raw_password):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def check_password(self, raw_password):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def set_unusable_password(self):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def has_usable_password(self):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def _legacy_get_session_auth_hash(self):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def get_session_auth_hash(self):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    @classmethod
+    def get_email_field_name(cls):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    @classmethod
+    def normalize_username(cls, username):
+        raise NotImplementedError('This method is not implemented for the Node model!')
 
 
 class UUIDRemoteCache(models.Model):
