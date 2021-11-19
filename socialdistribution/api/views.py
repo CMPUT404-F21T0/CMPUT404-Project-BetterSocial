@@ -25,7 +25,7 @@ class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
 
         new_response = OrderedDict()
 
-        new_response['type'] = 'followers'
+        new_response['type'] = 'authors'
         new_response['items'] = response.data
 
         response.data = new_response
