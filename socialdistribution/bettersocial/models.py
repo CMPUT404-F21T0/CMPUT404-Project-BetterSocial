@@ -47,7 +47,7 @@ class Author(models.Model):
 
     # Note: Registered as part of User
 
-    type = "Author"
+    type = "author"
 
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 

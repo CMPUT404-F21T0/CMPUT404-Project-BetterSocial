@@ -23,12 +23,12 @@ class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
 
-        new_response = OrderedDict()
+        root_json = OrderedDict()
 
-        new_response['type'] = 'authors'
-        new_response['items'] = response.data
+        root_json['type'] = 'authors'
+        root_json['items'] = response.data
 
-        response.data = new_response
+        response.data = root_json
 
         return response
 

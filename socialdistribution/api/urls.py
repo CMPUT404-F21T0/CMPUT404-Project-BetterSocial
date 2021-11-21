@@ -5,11 +5,10 @@ from . import views
 
 app_name = 'api'
 
-router = routers.DefaultRouter()
-router.register(r'authors', views.AuthorViewSet)
-router.register(r'author', views.AuthorViewSet)
+router = routers.DefaultRouter(trailing_slash = False)
+router.register(r'authors?/?', views.AuthorViewSet)
 
-author_router = routers.NestedSimpleRouter(router, r'author', lookup = 'author')
+author_router = routers.NestedSimpleRouter(router, r'authors?/?', lookup = 'author')
 author_router.register(r'posts', views.PostViewSet)
 
 post_router = routers.NestedSimpleRouter(author_router, r'posts', lookup = 'post')

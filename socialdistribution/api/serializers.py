@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework_nested import serializers as nested_serializers
 
+from api import helpers
 from bettersocial.models import *
 
 
@@ -35,7 +36,7 @@ class PostSerializer(serializers.ModelSerializer):
             'size': 5,
             'post': None,
             'id': None,
-            'comments': CommentSerializer(instance.comment_set.order_by('-published')[:5], context = self.context, many = True).data,
+            'comments': CommentSerializer(instance.comments.order_by('-published')[:5], context = self.context, many = True).data,
         }
 
     class Meta:
@@ -72,6 +73,8 @@ class AuthorSerializer(serializers.ModelSerializer):
         view_name = 'api:author-detail',
     )
 
+    url = serializers.Field(default = None)
+
     host = serializers.SerializerMethodField(
         method_name = 'get_host'
     )
@@ -79,6 +82,8 @@ class AuthorSerializer(serializers.ModelSerializer):
     displayName = serializers.SerializerMethodField(
         method_name = 'get_name'
     )
+
+    profileImage = serializers.Field(default = None)
 
     # posts = serializers.HyperlinkedIdentityField(
     #     view_name = 'api:post-list',
@@ -95,6 +100,8 @@ class AuthorSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         json = super().to_representation(instance)
 
+        json['id'] = helpers.remove_uuid_dashes(json['id'])
+
         json['url'] = json['id']
 
         return json
@@ -104,13 +111,17 @@ class AuthorSerializer(serializers.ModelSerializer):
         fields = [
             'type',
             'id',
+            'url',
             'host',
             'displayName',
-            'github_url',
-            # 'profileImage',
+            'github',
+            'profileImage',
         ]
-        # extra_kwargs = {
-        # }
+        extra_kwargs = {
+            'github': {
+                'source': 'github_url'
+            }
+        }
 
 
 class CommentSerializer(serializers.ModelSerializer):
