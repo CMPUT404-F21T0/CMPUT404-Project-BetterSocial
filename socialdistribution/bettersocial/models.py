@@ -25,7 +25,7 @@ class LocalAuthorMixin:
         """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
 
         # Massive code smell, I know -- but this is going to be refactored later into a helper function, rather than a mixin. I just need it to work for now.
-        if isinstance(self, Like):
+        if isinstance(self, Like) or isinstance(self, Comment):
             uuid_param = self.author_uuid
         elif isinstance(self, Follower):
             uuid_param = self.follower_uuid
@@ -215,7 +215,7 @@ class Post(Likeable):
 class Comment(Likeable, LocalAuthorMixin):
     """Represents a comment on a post on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
-    type = "Comment"
+    type = "comment"
 
     # UUID of the Comment object
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
