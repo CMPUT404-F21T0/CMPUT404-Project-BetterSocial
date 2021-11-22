@@ -1,6 +1,7 @@
 import uuid as uuid
 from uuid import UUID
 
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
@@ -24,7 +25,7 @@ class LocalAuthorMixin:
         """Tries to resolve the author_uuid to a local author on this server. Throws a DoesNotExist if the author cannot be found in the local database. This should be caught and handled appropriately by polling the other servers for the author"""
 
         # Massive code smell, I know -- but this is going to be refactored later into a helper function, rather than a mixin. I just need it to work for now.
-        if isinstance(self, Like):
+        if isinstance(self, Like) or isinstance(self, Comment):
             uuid_param = self.author_uuid
         elif isinstance(self, Follower):
             uuid_param = self.follower_uuid
@@ -46,7 +47,7 @@ class Author(models.Model):
 
     # Note: Registered as part of User
 
-    type = "Author"
+    type = "author"
 
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
 
@@ -214,7 +215,7 @@ class Post(Likeable):
 class Comment(Likeable, LocalAuthorMixin):
     """Represents a comment on a post on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
-    type = "Comment"
+    type = "comment"
 
     # UUID of the Comment object
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4)
@@ -303,8 +304,12 @@ class Inbox(models.Model):
 # -- Utility -- #
 
 
-class Node(models.Model):
-    """A bidirectional connection between this server and another."""
+class Node(AbstractBaseUser):
+    """A bidirectional connection between this server and another. Subclasses AbstractBaseUser since we kind of use it as a user object."""
+
+    # Unsets fields from AbstractBaseUser
+    password = None
+    last_login = None
 
     host = models.CharField(max_length = 255, unique = True)
 
@@ -322,6 +327,38 @@ class Node(models.Model):
     class Meta:
         verbose_name = 'Node'
         verbose_name_plural = 'Nodes'
+
+    def get_username(self):
+        return self.host
+
+    def clean(self):
+        pass
+
+    def set_password(self, raw_password):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def check_password(self, raw_password):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def set_unusable_password(self):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def has_usable_password(self):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def _legacy_get_session_auth_hash(self):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    def get_session_auth_hash(self):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    @classmethod
+    def get_email_field_name(cls):
+        raise NotImplementedError('This method is not implemented for the Node model!')
+
+    @classmethod
+    def normalize_username(cls, username):
+        raise NotImplementedError('This method is not implemented for the Node model!')
 
 
 class UUIDRemoteCache(models.Model):
