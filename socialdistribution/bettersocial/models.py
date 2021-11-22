@@ -88,7 +88,7 @@ class Author(models.Model):
 class Like(models.Model, LocalAuthorMixin):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
-    type = "Like"
+    type = "like"
 
     likeable_models = models.Q(model = 'post') | models.Q(model = 'comment')
 
@@ -153,7 +153,7 @@ class Likeable(models.Model):
 class Post(Likeable):
     """Represents a post made by a user. Can have multiple types and has visibility settings"""
 
-    type = "Post"
+    type = "post"
 
     class Visibility(models.TextChoices):
         PUBLIC = 'PUBLIC', 'Public'

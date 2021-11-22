@@ -32,7 +32,7 @@ class AuthorSerializer(serializers.ModelSerializer):
     )
 
     def get_host(self, instance: Author):
-        return reverse('bettersocial:index', request = self.context['request'])
+        return reverse('api:api-root', request = self.context['request'])
 
     def get_name(self, instance: Author):
         # TODO: 2021-10-25 simplify
