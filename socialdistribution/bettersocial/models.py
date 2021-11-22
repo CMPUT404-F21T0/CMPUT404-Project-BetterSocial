@@ -7,6 +7,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db import models
 
+from api import adapters
+from api.adapters import BaseAdapter
 from .validators import validate_categories
 
 
@@ -314,7 +316,10 @@ class Node(AbstractBaseUser):
     host = models.CharField(max_length = 255, unique = True)
 
     # prefix between the host and the api endpoints. Example http://myhost.com/service/my/api/call, where "service" is the prefix.
-    prefix = models.CharField(max_length = 32, default = 'service')
+    prefix = models.CharField(max_length = 32, default = 'service', blank = True)
+
+    # The adapter that this node uses
+    adapter_id = models.CharField(max_length = 32, default = None, choices = [(x, x) for x in adapters.registered_adapters.keys()])
 
     # Auth given to connect to THIS server
     auth_username = models.CharField(max_length = 255)
@@ -327,6 +332,11 @@ class Node(AbstractBaseUser):
     class Meta:
         verbose_name = 'Node'
         verbose_name_plural = 'Nodes'
+
+    @property
+    def adapter(self) -> BaseAdapter:
+        adapter = adapters.registered_adapters.get(self.adapter_id)
+        return adapter if adapter else adapters.registered_adapters.get('default')
 
     def get_username(self):
         return self.host
