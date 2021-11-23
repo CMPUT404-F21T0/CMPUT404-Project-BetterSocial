@@ -24,6 +24,15 @@
 
         <div class="row">
             <div class="size-25">
+                {{ form.content_type.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.content_type }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
                 {{ form.description.label_tag}}
             </div>
             <div class="size-75">
@@ -39,6 +48,24 @@
                 {{ form.content }}
             </div>
         </div>
+        
+        <div class="row">
+            <div class="size-25">
+                {{ form.image_content.label_tag}}
+            </div>
+            <div class="size-75">
+                {{ form.image_content }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.categories.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.categories }}
+            </div>
+        </div>
 
         <div class="row">
             <div class="size-25">
@@ -51,13 +78,12 @@
 
         <div class="row">
             <div class="size-25">
-                {{ form.image_content.label_tag}}
+                {{ form.unlisted.label_tag }}
             </div>
             <div class="size-75">
-                {{ form.image_content }}
+                {{ form.unlisted }}
             </div>
         </div>
-
         </br></br>
         <a href="{% url 'bettersocial:index' %}"> <button>Update</button></a>
     </form>
