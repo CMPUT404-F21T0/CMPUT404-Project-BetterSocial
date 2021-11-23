@@ -60,7 +60,7 @@
 
         <div class="row">
             <div class="size-25">
-                {{ form.categories.label_tag }}
+                {{ form.categories.label_tag }} - In the form ["example", "xxx"]
             </div>
             <div class="size-75">
                 {{ form.categories }}
@@ -75,7 +75,16 @@
                 {{ form.visibility }}
             </div>
         </div>
-
+        
+        <div class="row">
+            <div class="size-25">
+                {{ form.recipient_uuid.label_tag }} - Only if Private to Author (DM)
+            </div>
+            <div class="size-75">
+                {{ form.recipient_uuid }}
+            </div>
+        </div>
+        
         <div class="row">
             <div class="size-25">
                 {{ form.unlisted.label_tag }}
@@ -84,6 +93,7 @@
                 {{ form.unlisted }}
             </div>
         </div>
+
         </br></br>
         <a href="{% url 'bettersocial:index' %}"> <button>Update</button></a>
     </form>

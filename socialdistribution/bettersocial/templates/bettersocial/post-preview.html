@@ -28,7 +28,9 @@
             <a href="{% url 'bettersocial:article_details' post.pk %}">
                 <h2 class="post-title">{{ post.title }}</h2>
                 <h4 class="post-publisher">By: {{ post.author.display_name }}</h4>
-                <p class="post-description"> {{ post.description }}</p>
+                <h4 class="post-publisher">Tags: {{ post.categories }}</h4>
+                <h4 class="post-publisher">Visibility: {{ post.visibility }}</h4>
+                <p class="post-description">Description: {{ post.description }}</p>
             </a>
             <hr>
 
