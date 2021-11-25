@@ -8,7 +8,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
 
-from bettersocial.models import Author, Follower, Following, Inbox, Post, Comment
+from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment
 from .forms import CommentCreationForm, PostCreationForm
 
 
@@ -143,14 +143,14 @@ class AddCommentView(generic.CreateView):
 
 @method_decorator(login_required, name = 'dispatch')
 class InboxView(generic.ListView):
-    model = Inbox
+    model = InboxItem
     template_name = 'bettersocial/inbox.html'
     context_object_name = 'inbox_items'
 
     def get_queryset(self):
         """Return all inbox items."""
         content_type = DjangoContentType.objects.get_for_model(model = Follower)
-        return Inbox.objects.filter(Q(dj_content_type = content_type))
+        return InboxItem.objects.filter(Q(dj_content_type = content_type))
 
 
 @method_decorator(login_required, name = 'dispatch')

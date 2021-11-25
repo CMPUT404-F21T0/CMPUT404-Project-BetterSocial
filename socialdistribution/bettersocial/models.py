@@ -7,6 +7,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db import models
 
+from api import adapters
+from api.adapters import BaseAdapter
 from .validators import validate_categories
 
 
@@ -88,7 +90,7 @@ class Author(models.Model):
 class Like(models.Model, LocalAuthorMixin):
     """Represents a like on a post or comment on this server. Because comments are necessarily attached to posts, we store comments from foreign sources here."""
 
-    type = "Like"
+    type = "like"
 
     likeable_models = models.Q(model = 'post') | models.Q(model = 'comment')
 
@@ -153,7 +155,7 @@ class Likeable(models.Model):
 class Post(Likeable):
     """Represents a post made by a user. Can have multiple types and has visibility settings"""
 
-    type = "Post"
+    type = "post"
 
     class Visibility(models.TextChoices):
         PUBLIC = 'PUBLIC', 'Public'
@@ -279,16 +281,15 @@ class Following(models.Model, LocalAuthorMixin):
         unique_together = ['author', 'following_uuid']
 
 
-# TODO: 2021-10-26 rename model to be clearer
-class Inbox(models.Model):
-    """Each row represents an object that is SENT to the user's inbox."""
+class InboxItem(models.Model):
+    """Each row represents an object that is SENT to the user's inbox. This is a light model, as it only references rows"""
 
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Used for determining which object this row stores. We don't need a GenericForeignKey relationship, because it would not actually resolve to an object, but we still want to know the type.
     dj_content_type = models.ForeignKey(
         DjangoContentType,
-        limit_choices_to = models.Q(model = 'post') | models.Q(model = 'like') | models.Q(model = 'follower'),
+        limit_choices_to = models.Q(model = 'post') | models.Q(model = 'comment') | models.Q(model = 'like') | models.Q(model = 'follower'),
         on_delete = models.CASCADE
     )
 
@@ -297,8 +298,8 @@ class Inbox(models.Model):
     inbox_object = models.JSONField(default = dict)
 
     class Meta:
-        verbose_name = 'Inbox'
-        verbose_name_plural = 'Inbox'
+        verbose_name = 'InboxItem'
+        verbose_name_plural = 'InboxItem'
 
 
 # -- Utility -- #
@@ -314,7 +315,10 @@ class Node(AbstractBaseUser):
     host = models.CharField(max_length = 255, unique = True)
 
     # prefix between the host and the api endpoints. Example http://myhost.com/service/my/api/call, where "service" is the prefix.
-    prefix = models.CharField(max_length = 32, default = 'service')
+    prefix = models.CharField(max_length = 32, default = 'service', blank = True)
+
+    # The adapter that this node uses
+    adapter_id = models.CharField(max_length = 32, default = None, choices = [(x, x) for x in adapters.registered_adapters.keys()])
 
     # Auth given to connect to THIS server
     auth_username = models.CharField(max_length = 255)
@@ -327,6 +331,11 @@ class Node(AbstractBaseUser):
     class Meta:
         verbose_name = 'Node'
         verbose_name_plural = 'Nodes'
+
+    @property
+    def adapter(self) -> BaseAdapter:
+        adapter = adapters.registered_adapters.get(self.adapter_id)
+        return adapter if adapter else adapters.registered_adapters.get('default')
 
     def get_username(self):
         return self.host
