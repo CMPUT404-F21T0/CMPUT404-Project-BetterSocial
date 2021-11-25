@@ -243,3 +243,31 @@ class PostLikeSerializer(BaseLikeSerializer):
 
 class CommentLikeSerializer(BaseLikeSerializer):
     pass
+
+
+class InboxItemSerializer(serializers.ModelSerializer):
+
+    # def update(self, instance, validated_data):
+    #     pass
+    #
+    # def create(self, validated_data):
+    #     super().create(validated_data)
+
+    def validate(self, attrs):
+        # types = ['post', 'comment', 'like', 'follower']
+        #
+        # if attrs['type'] not in types:
+        #     raise ValidationError(f'type must be one of [{", ".join(types)}]!')
+        return attrs
+
+    def to_representation(self, instance):
+        json = super().to_representation(instance)
+
+        # Flatten representation
+        json = json['inbox_object']
+
+        return json
+
+    class Meta:
+        model = InboxItem
+        fields = ['inbox_object']
