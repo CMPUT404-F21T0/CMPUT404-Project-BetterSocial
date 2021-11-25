@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name = 'node',
             name = 'adapter_id',
-            field = models.CharField(choices = [('default', 'default'), ('team_1', 'team_1')], default = None, max_length = 32),
+            field = models.CharField(choices = [('default', 'default'), ('team_1', 'team_1')], default = 'default', max_length = 32),
         ),
         migrations.AlterField(
             model_name = 'node',
