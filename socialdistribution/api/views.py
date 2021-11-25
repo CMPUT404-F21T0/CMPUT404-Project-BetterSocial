@@ -64,6 +64,14 @@ class InboxItemViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Cr
     def get_queryset(self):
         return InboxItem.objects.filter(author_id = self.kwargs['author_pk']).all()
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+
+        # This is needed to know what author's inbox to save at
+        context['author_id'] = self.kwargs['author_pk']
+
+        return context
+
     def create(self, request, *args, **kwargs):
 
         # Modify the request via the adapter method

@@ -1,4 +1,8 @@
+from typing import Dict, List
+
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 from rest_framework_nested import serializers as nested_serializers
 
@@ -246,19 +250,126 @@ class CommentLikeSerializer(BaseLikeSerializer):
 
 
 class InboxItemSerializer(serializers.ModelSerializer):
+    """The ModelSerializer part of this is only for the GET part -- POST is kind of custom"""
 
-    # def update(self, instance, validated_data):
-    #     pass
-    #
-    # def create(self, validated_data):
-    #     super().create(validated_data)
+    def __init__(self, instance = None, data = empty, **kwargs):
+        super().__init__(instance, data, **kwargs)
+
+        self.types = {
+            'post': {
+                'model': Post,
+                'validator': self._validate_post
+            },
+            'comment': {
+                'model': Comment,
+                'validator': self._validate_comment
+            },
+            'like': {
+                'model': Like,
+                'validator': self._validate_like
+            },
+            'follow': {
+                'model': Follower,
+                'validator': self._validate_follower
+            },
+        }
+
+    def create(self, validated_data):
+        # We have to access the raw request since DRF blows any fields that are not part of the Model
+        data: Dict = self.context['request'].data
+
+        inbox_item = InboxItem.objects.create(
+            author_id = self.context['author_id'],
+            dj_content_type = DjangoContentType.objects.get_for_model(model = self.types[data['type']]['model']),
+            inbox_object = data
+        )
+
+        return inbox_item
 
     def validate(self, attrs):
-        # types = ['post', 'comment', 'like', 'follower']
-        #
-        # if attrs['type'] not in types:
-        #     raise ValidationError(f'type must be one of [{", ".join(types)}]!')
+
+        # We have to access the raw request since DRF blows any fields that are not part of the Model
+        data: Dict = self.context['request'].data
+
+        # Make sure that type is there
+        self._validate_required(data, ['type'])
+
+        # Fix type field
+        data['type'] = data['type'].strip().lower()
+
+        if data['type'] not in self.types.keys():
+            raise ValidationError({ 'type': f'type must be one of {{{", ".join(self.types.keys())}}}!' })
+
+        # Access the validator for that type and call it. It might change request.data somehow
+        self.types[data['type']]['validator'](data)
+
+        # return attrs, not data, to make DRF happy
         return attrs
+
+    def _validate_required(self, data: Dict, required_fields: List):
+        for field in required_fields:
+            if field not in data:
+                raise ValidationError({ field: 'This field is required!' })
+
+    def _validate_post(self, data: Dict):
+
+        # Don't really care about the other fields
+        self._validate_required(data, [
+            'title',
+            'id',
+            'description',
+            'contentType',
+            'content',
+            'author',
+            'visibility'
+        ])
+
+        return data
+
+    def _validate_comment(self, data: Dict):
+        return data
+
+    def _validate_like(self, data: Dict):
+        return data
+
+    def _validate_follower(self, data: Dict):
+
+        # Don't really care about the other fields
+        self._validate_required(data, [
+            'actor',
+            'object',
+        ])
+
+        if not isinstance(data['actor'], dict):
+            raise ValidationError({ 'actor': 'This field must be an object containing an author!' })
+
+        # Supposedly our author
+        if not isinstance(data['object'], dict):
+            raise ValidationError({ 'object': 'This field must be an object containing an author!' })
+
+        self._validate_required(data['actor'], [
+            'type',
+            'id',
+            'host'
+        ])
+
+        # Supposedly our author
+        self._validate_required(data['object'], [
+            'type',
+            'id',
+            'host'
+        ])
+
+        author_uuid = helpers.extract_uuid_from_id(data['object']['id'])
+
+        if author_uuid is None:
+            raise ValidationError({ 'object': 'The author\'s `id` field must have a valid author UUID!' })
+
+        # Make sure the target is our author
+        if UUID(self.context['author_id']) != author_uuid:
+            raise ValidationError({ 'object': 'The author\'s `id` field must match the author you\'re sending it to!' })
+
+        return data
 
     def to_representation(self, instance):
         json = super().to_representation(instance)
