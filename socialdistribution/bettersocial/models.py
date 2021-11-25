@@ -318,7 +318,7 @@ class Node(AbstractBaseUser):
     prefix = models.CharField(max_length = 32, default = 'service', blank = True)
 
     # The adapter that this node uses
-    adapter_id = models.CharField(max_length = 32, default = None, choices = [(x, x) for x in adapters.registered_adapters.keys()])
+    adapter_id = models.CharField(max_length = 32, default = 'default', choices = [(x, x) for x in adapters.registered_adapters.keys()])
 
     # Auth given to connect to THIS server
     auth_username = models.CharField(max_length = 255)
