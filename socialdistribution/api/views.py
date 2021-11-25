@@ -2,6 +2,7 @@ from collections import OrderedDict
 from uuid import UUID
 
 from django.contrib.auth.models import User
+from django.db.models import Q
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied
 
@@ -9,6 +10,8 @@ from api import serializers
 from bettersocial import models
 from bettersocial.models import Post, InboxItem, Node
 
+
+## API SPEC ##
 
 class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin):
     queryset = models.Author.objects.all()
@@ -99,3 +102,30 @@ class CommentLikeViewSet(viewsets.ModelViewSet):
 class PostLikeViewSet(viewsets.ModelViewSet):
     queryset = models.Like.objects.all()
     serializer_class = serializers.PostLikeSerializer
+
+
+## Helper Views -- Local ##
+
+class AllPostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    """Helper view to get all of the posts that the user should see"""
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.PostSerializer
+
+    def list(self, request, *args, **kwargs):
+        if not isinstance(request.user, User):
+            raise PermissionDenied({ 'message': "You must be authenticated as a user to get post items this way!" })
+
+        self.kwargs['author_uuid'] = request.user.author.uuid
+
+        return super().list(request, *args, **kwargs)
+
+    def get_queryset(self):
+
+        author_uuid = self.kwargs['author_uuid']
+
+        return Post.objects.filter(
+            (Q(visibility = Post.Visibility.PUBLIC)) |
+            (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author_uuid) & Q(author__following__following_uuid = author_uuid)) |
+            (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author_uuid))
+        ).distinct().order_by('-published')

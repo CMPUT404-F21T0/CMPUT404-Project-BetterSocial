@@ -154,21 +154,8 @@ class InboxView(generic.ListView):
 
 
 @method_decorator(login_required, name = 'dispatch')
-class StreamView(generic.ListView):
-    model = Post
+class StreamView(generic.TemplateView):
     template_name = 'bettersocial/stream.html'
-    context_object_name = 'stream_items'
-
-    def get_queryset(self):
-        """Return all post objects."""
-        author_uuid = self.request.user.author.uuid
-
-        return Post.objects.filter(
-            (Q(visibility = Post.Visibility.PUBLIC)) |
-            (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author_uuid) & Q(author__following__following_uuid = author_uuid)) |
-            (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author_uuid))
-        ).distinct().order_by('-published')
-
 
 @method_decorator(login_required, name = 'dispatch')
 class PostLikesView(generic.ListView):

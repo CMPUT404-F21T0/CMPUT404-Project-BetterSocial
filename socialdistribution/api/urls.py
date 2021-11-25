@@ -8,6 +8,9 @@ app_name = 'api'
 router = routers.DefaultRouter(trailing_slash = '/?')
 router.register(r'authors?', views.AuthorViewSet)
 
+# Local helper api calls
+router.register(r'posts', views.AllPostsViewSet, basename = 'local_post')
+
 author_router = routers.NestedSimpleRouter(router, r'authors?', lookup = 'author')
 author_router.register(r'posts', views.PostViewSet, basename = 'post')
 author_router.register(r'inbox', views.InboxItemViewSet, basename = 'inbox')
