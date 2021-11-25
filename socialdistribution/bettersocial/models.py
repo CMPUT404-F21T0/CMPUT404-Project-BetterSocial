@@ -281,16 +281,15 @@ class Following(models.Model, LocalAuthorMixin):
         unique_together = ['author', 'following_uuid']
 
 
-# TODO: 2021-10-26 rename model to be clearer
-class Inbox(models.Model):
-    """Each row represents an object that is SENT to the user's inbox."""
+class InboxItem(models.Model):
+    """Each row represents an object that is SENT to the user's inbox. This is a light model, as it only references rows"""
 
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Used for determining which object this row stores. We don't need a GenericForeignKey relationship, because it would not actually resolve to an object, but we still want to know the type.
     dj_content_type = models.ForeignKey(
         DjangoContentType,
-        limit_choices_to = models.Q(model = 'post') | models.Q(model = 'like') | models.Q(model = 'follower'),
+        limit_choices_to = models.Q(model = 'post') | models.Q(model = 'comment') | models.Q(model = 'like') | models.Q(model = 'follower'),
         on_delete = models.CASCADE
     )
 
@@ -299,8 +298,8 @@ class Inbox(models.Model):
     inbox_object = models.JSONField(default = dict)
 
     class Meta:
-        verbose_name = 'Inbox'
-        verbose_name_plural = 'Inbox'
+        verbose_name = 'InboxItem'
+        verbose_name_plural = 'InboxItem'
 
 
 # -- Utility -- #

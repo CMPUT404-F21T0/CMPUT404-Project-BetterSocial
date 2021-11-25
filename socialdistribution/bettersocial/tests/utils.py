@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db import models
 
-from bettersocial.models import Author, Post, Comment, Like, LikedRemote, Follower, Following, Inbox
+from bettersocial.models import Author, Post, Comment, Like, LikedRemote, Follower, Following, InboxItem
 
 
 def create_test_user(
@@ -151,7 +151,7 @@ def create_test_inbox_entry(
     Creates a test Inbox entry with some reasonable defaults
     """
 
-    return Inbox.objects.create(
+    return InboxItem.objects.create(
         author = author,
         dj_content_type = dj_content_type,
         object = inbox_object
