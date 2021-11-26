@@ -157,7 +157,7 @@ class Post(Likeable):
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Used to determine which author UUID the author of this post wants to send this post to. Does not mean anything unless the visibility is PRIVATE.
-    recipient_uuid = models.UUIDField(null = True)
+    recipient_uuid = models.UUIDField(null = True, blank = True)
 
     # Source URL of reshared posts. When WE write to the database, this should be set to the host of the post that we reshared.
     source = models.CharField(max_length = 255, null = True)
@@ -174,13 +174,13 @@ class Post(Likeable):
     image_content = models.ImageField(null = True, blank = True, upload_to = 'images/')
 
     # Validated as a JSON list of non-empty strings.
-    categories = models.JSONField(validators = [validate_categories], default = list)
+    categories = models.JSONField(validators = [validate_categories], default = list, blank = True)
 
     # Soft enum type, enforced in Django, not database level
     visibility = models.CharField(max_length = 32, choices = Visibility.choices, default = Visibility.PUBLIC)
 
     # Does not mean anything UNLESS the visibility is private. Image only posts should ALWAYS have this set to true
-    unlisted = models.BooleanField(default = False)
+    unlisted = models.BooleanField(default = False, blank = True)
 
     # Automatically sets the time to now on add and does not allow updates to it -- https://docs.djangoproject.com/en/3.2/ref/models/fields/#django.db.models.DateField.auto_now_add
     published = models.DateTimeField(auto_now_add = True)
@@ -223,8 +223,6 @@ class Comment(Likeable, LocalAuthorMixin):
 
     published = models.DateTimeField(auto_now_add = True)
 
-    author_username = models.CharField(max_length = 32, null = True)
-
     class Meta:
         verbose_name = 'Comment'
         verbose_name_plural = 'Comments'
@@ -234,9 +232,12 @@ class Comment(Likeable, LocalAuthorMixin):
 
         return ContentType[self.content_type]
 
+    def get_local_author_username(self):
+        return Author.objects.filter(uuid = self.author_uuid).get().display_name
+
     def __str__(self):
         # TODO: 2021-10-28 query local authors display name through author uuid, for remote authors TBD
-        return str(self.post.title) + ' | ' + str(self.author_username)
+        return str(self.post.title) + ' | ' + str(Author.objects.filter(uuid = self.author_uuid).get().display_name)
 
 
 class Follower(models.Model, LocalAuthorMixin):

@@ -10,6 +10,8 @@
             {% csrf_token %}
             <h2 class="post-title">{{ post.title }}</h2>
             <h4 class="post-publisher">By: {{ post.author.display_name }}</h4>
+            <p class="post-description"> Tags: {{ post.categories }}</p>
+            <br>
             <p class="post-description"> {{ post.description }}</p>
             <hr>
             {% if post.content_type == "application/base64" %}
@@ -44,7 +46,7 @@
             <br/>
             <hr>
             {% for comment in comments %}
-                <div class = "post-content"> <strong>{{ comment.author_username }} -  {{ comment.published }}</strong> </div>
+                <div class = "post-content"> <strong>{{ comment.get_local_author_username }} -  {{ comment.published }}</strong> </div>
                 <div class = "post-content"> {{ comment.comment }} </div>
                 <hr/>
             {% endfor %}

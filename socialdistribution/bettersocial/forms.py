@@ -7,11 +7,15 @@ class PostCreationForm(ModelForm):
         model = Post
 
         # More fields can be added
-        fields = ['title',
+        fields = ['title', 
+                  'content_type',
                   'description', 
                   'content',
                   'visibility',
-                  'image_content']
+                  'image_content',
+                  'categories',
+                  'unlisted',
+                  'recipient_uuid']
 
 class CommentCreationForm(ModelForm):
 
@@ -20,6 +24,5 @@ class CommentCreationForm(ModelForm):
 
         # More fields can be added
         fields = ['author_uuid',
-                  'author_username',
                   'comment']
 
