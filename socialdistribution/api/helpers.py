@@ -1,7 +1,8 @@
 import re
-from typing import Optional
-
+from typing import Optional, Union
 from uuid import UUID
+
+from bettersocial.models import UUIDRemoteCache, Node
 
 
 def remove_uuid_dashes(uuid_str: str):
@@ -19,3 +20,29 @@ def extract_uuid_from_id(id: str) -> Optional[UUID]:
         return None
 
     return UUID(match.group(1))
+
+
+def get_host_of_uuid(uuid: Union[str, UUID]) -> Optional[Node]:
+    """Queries the cache for the node that hosts the object with this UUID"""
+    if isinstance(uuid, str):
+        uuid = UUID(uuid)
+
+    queryset = UUIDRemoteCache.objects.filter(uuid = uuid)
+
+    if not queryset.exists():
+        return None
+
+    return queryset.get().node
+
+
+def cache_host_of_uuid(uuid: Union[str, UUID], node: Node):
+    """Writes/overwrites to the UUID cache which node hosts the object specified by the UUID."""
+    if isinstance(uuid, str):
+        uuid = UUID(uuid)
+
+    try:
+        cached_object = UUIDRemoteCache.objects.filter(uuid = uuid).get()
+        cached_object.node = node
+        cached_object.save()
+    except UUIDRemoteCache.DoesNotExist:
+        UUIDRemoteCache.objects.create(uuid = uuid, node = node)

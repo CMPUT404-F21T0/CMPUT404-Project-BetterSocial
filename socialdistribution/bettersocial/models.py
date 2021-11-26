@@ -373,19 +373,8 @@ class Node(AbstractBaseUser):
 class UUIDRemoteCache(models.Model):
     """A database-level lookup table for caching where a certain uuid for something is stored. Over time, this will make it so we don't have to ping every node to know what server hosts whatever object we want. This should be second priority to checking local objects. So, if you want an author by uuid, check local storage, then check this table."""
 
-    # TODO: 2021-10-21 WIP
-
     # Unique and indexed by default so accesses will be fast
-    # TODO: 2021-10-20 add validator
     uuid = models.UUIDField(primary_key = True)
-
-    dj_content_type = models.ForeignKey(
-        DjangoContentType,
-
-        # These are the choices that are the most readily cacheable
-        limit_choices_to = models.Q(model = 'author') | models.Q(model = 'post') | models.Q(model = 'comment'),
-        on_delete = models.CASCADE
-    )
 
     # Holds the host and prefix for finding the resource, the api should bt the exact same otherwise
     node = models.ForeignKey(Node, on_delete = models.CASCADE)
@@ -395,4 +384,4 @@ class UUIDRemoteCache(models.Model):
         verbose_name = 'UUID Remote Cache'
         verbose_name_plural = 'UUID Remote Cache'
 
-        unique_together = ['uuid', 'dj_content_type']
+        unique_together = ['uuid', 'node']
