@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
 
 from api import pagination
 from api import serializers
@@ -110,6 +111,28 @@ class PostLikeViewSet(viewsets.ModelViewSet):
 
 
 # -- Helper Views - Local -- #
+
+class AllRemotePostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    """Helper view to get all remote posts that are viewable to the current author"""
+
+    queryset = Post.objects.none()
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.PostSerializer
+
+    def list(self, request, *args, **kwargs):
+        if not isinstance(request.user, User):
+            raise PermissionDenied({ 'message': "You must be authenticated as a user to get post items this way!" })
+
+        data = list()
+
+        # Dirtiest hack but hey it works
+        queryset = InboxItem.objects.filter(author = request.user.author, inbox_object__iregex = '"type": "post"').all()
+
+        for item in queryset:
+            data.append(item.inbox_object)
+
+        return Response(data)
+
 
 class AllPostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     """Helper view to get all of the posts that the user should see"""

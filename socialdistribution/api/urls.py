@@ -9,7 +9,8 @@ router = routers.DefaultRouter(trailing_slash = '/?')
 router.register(r'authors?', views.AuthorViewSet)
 
 # Local helper api calls
-router.register(r'posts', views.AllPostsViewSet, basename = 'local_post')
+router.register(r'posts', views.AllPostsViewSet, basename = 'local-post')
+router.register(r'remote-posts', views.AllRemotePostsViewSet, basename = 'remote-post')
 
 author_router = routers.NestedSimpleRouter(router, r'authors?', lookup = 'author')
 author_router.register(r'posts', views.PostViewSet, basename = 'post')
