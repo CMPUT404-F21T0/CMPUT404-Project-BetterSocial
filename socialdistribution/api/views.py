@@ -6,16 +6,18 @@ from django.db.models import Q
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied
 
+from api import pagination
 from api import serializers
 from bettersocial import models
 from bettersocial.models import Post, InboxItem, Node
 
 
-## API SPEC ##
+# -- API SPEC -- #
 
 class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin):
     queryset = models.Author.objects.all()
     serializer_class = serializers.AuthorSerializer
+    pagination_class = pagination.CustomPageNumberPagination
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
@@ -36,6 +38,7 @@ class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
 
 class PostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     serializer_class = serializers.PostSerializer
+    pagination_class = pagination.CustomPageNumberPagination
 
     def get_queryset(self):
         return models.Post.objects.filter(author__uuid = self.kwargs['author_pk'], visibility = Post.Visibility.PUBLIC).all()
@@ -63,6 +66,7 @@ class CommentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
 class InboxItemViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
     serializer_class = serializers.InboxItemSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = pagination.CustomPageNumberPagination
 
     def get_queryset(self):
         return InboxItem.objects.filter(author_id = self.kwargs['author_pk']).all()
@@ -97,6 +101,7 @@ class InboxItemViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Cr
 class CommentLikeViewSet(viewsets.ModelViewSet):
     queryset = models.Like.objects.all()
     serializer_class = serializers.CommentLikeSerializer
+    pagination_class = pagination.CustomPageNumberPagination
 
 
 class PostLikeViewSet(viewsets.ModelViewSet):
@@ -104,7 +109,7 @@ class PostLikeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.PostLikeSerializer
 
 
-## Helper Views -- Local ##
+# -- Helper Views - Local -- #
 
 class AllPostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     """Helper view to get all of the posts that the user should see"""
