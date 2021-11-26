@@ -4,6 +4,11 @@
     {% load static %}
     <!-- Style Sheet and References -->
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/stream.css' %}">
+    <script type="text/javascript" src="{% static "bettersocial/stream.js" %}"></script>
+
+    {#    <div id="stream_items">#}
+    {#        <p>No posts in stream.</p>#}
+    {#    </div>#}
 
     {% if stream_items %}
 
@@ -12,7 +17,7 @@
         {% endfor %}
 
     {% else %}
-        <p>No posts in stream.</p>
+
     {% endif %}
 
 {% endblock %}
