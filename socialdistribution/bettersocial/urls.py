@@ -20,6 +20,8 @@ urlpatterns = [
     path('friends/', views.FollowersView.as_view(), name = 'friends'),
     path('delete-following/', views.DeleteFollowingView.as_view(), name = 'delete_following'),
     path('add-following/', views.CreateFollowingView.as_view(), name = 'add_following'),
+    path('article/<uuid:pk>/share/', views.SharePostView.as_view(), name= 'share_post'),
+    path('article/<uuid:uuid>/share/<str:action>', views.SharePostActionView.as_view(), name= 'share_post_action'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

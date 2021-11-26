@@ -7,12 +7,13 @@
         <div class="post-header">
             <!-- TODO: add if user has profile pic show pic if not show icon -->
             <div class="left">
-                <a href="{% url 'bettersocial:profile' post.author.uuid %}">
+                {% comment %}{% url 'bettersocial:profile' post.author.uuid %}{% endcomment %}
+                <a href="{{ post.id }}">
                         <span class="iconify" data-icon="iconoir:profile-circled" data-width="42"
                               data-height="42"></span>
                 </a>
-                <a href="{% url 'bettersocial:profile' post.author.uuid %}">
-                    <h3>{{ post.author.user.username }}</h3>
+                <a href="{{ post.id }}">
+                    <h3>{{ post.author.displayName }}</h3>
                 </a>
             </div>
 
@@ -25,18 +26,20 @@
         </div>
 
         <div class="post-container">
-            <a href="{% url 'bettersocial:article_details' post.pk %}">
+            <a href="{{ post.id }}">
                 <h2 class="post-title">{{ post.title }}</h2>
-                <h4 class="post-publisher">By: {{ post.author.display_name }}</h4>
-                <p class="post-description"> {{ post.description }}</p>
+                <h4 class="post-publisher">By: {{ post.author.displayName }}</h4>
+                <h4 class="post-publisher">Tags: {{ post.categories }}</h4>
+                <h4 class="post-publisher">Visibility: {{ post.visibility }}</h4>
+                <p class="post-description">Description: {{ post.description }}</p>
             </a>
             <hr>
 
-            {% if post.content_type == "application/base64" %}
+            {% if post.contentType == "application/base64" %}
                 <!-- TODO: not really sure what to do here  -->
                 <div class="post-content"> {{ post.content }}</div>
 
-            {% elif post.content_type == "text/markdown" %}
+            {% elif post.contentType == "text/markdown" %}
                 {% load markdown_extras %}
                 <div class="post-content">
                     <span>{{ post.content | markdown | safe }}</span>
@@ -44,11 +47,11 @@
                         <img src="{{ post.image_content.url }}" width='600' height='400'>
                     {% endif %}
                 </div>
-            {% elif post.content_type == "image/jpeg;base64" or post.content_type == "image/png;base64" %}
+            {% elif post.contentType == "image/jpeg;base64" or post.contentType == "image/png;base64" %}
                 <div class="image-container">
-                    <img id='base64image' src='data:{{ post.content_type }}, {{ post.content }}'/>
+                    <img id='base64image' src='data:{{ post.contentType }}, {{ post.content }}'/>
                 </div>
-            {% elif post.content_type == "text/plain" %}
+            {% elif post.contentType == "text/plain" %}
                 <div class="post-content">{{ post.content }}</div>
                 {% if post.image_content %}
                     <img src="{{ post.image_content.url }}" width='600' height='400'>
@@ -63,16 +66,19 @@
             {% endif %}
 
             <!-- TODO: Edit href for share post -->
+            {% comment %}{% url 'bettersocial:share_post' post.pk %}{% endcomment %}
             <a href="">
                 <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
             </a>
+            {% comment %}{% url 'bettersocial:share_post' post.pk %}{% endcomment %}
             <a class="icon-text" href="">Share Post</a>
             <!-- TODO: Edit href for share likes and dynamically add number of likes -->
             <!-- TODO: Pluralize likes  -->
             <a href="">
                 <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
             </a>
-            <a class="icon-text" href="{% url 'bettersocial:post_likes_list' post.pk %}">Likes</a>
+            {% comment %}{% url 'bettersocial:post_likes_list' post.pk %}{% endcomment %}
+            <a class="icon-text" href="">Likes</a>
             <!-- TODO: Edit href for comments and dynamically add number of comments -->
             <!-- TODO: Pluralize comments  -->
             <a href="">
@@ -80,9 +86,11 @@
                           data-height="30"></span>
             </a>
             <a class="icon-text"
-               href="{% url 'bettersocial:article_details' post.pk %}"> {{ post.comments.all | length }}
+                    {% comment %}{% url 'bettersocial:article_details' post.pk %}{% endcomment %}
+               href="{{ post.id }}"> {{ post.comments.all | length }}
                 Comment{{ post.comments.all | length | pluralize }}</a>
         </div>
+
 
     </div>
 {% else %}

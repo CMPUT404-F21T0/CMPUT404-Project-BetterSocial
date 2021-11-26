@@ -69,17 +69,6 @@ class Author(models.Model):
     def display_name(self) -> str:
         return f'{self.user.first_name} {self.user.last_name}'
 
-    @property
-    def friends_set(self):
-        following = { f.following_uuid for f in self.following_set.all() }
-        followers = { f.follower_uuid for f in self.follower_set.all() }
-
-        # TODO: 2021-10-28 refactor later
-        try:
-            return Author.objects.filter(uuid__in = followers & following)
-        except Author.DoesNotExist as e:
-            raise Author.DoesNotExist(f'A friend of author ({self.uuid}) could not be found locally! Perhaps this author exists on a remote server and you forgot to check for it?') from e
-
     def friends_with(self, author_uuid: UUID) -> bool:
         return self.following_set.filter(following_uuid = author_uuid).exists() and self.follower_set.filter(follower_uuid = author_uuid).exists()
 
@@ -168,7 +157,7 @@ class Post(Likeable):
     author = models.ForeignKey(Author, on_delete = models.CASCADE)
 
     # Used to determine which author UUID the author of this post wants to send this post to. Does not mean anything unless the visibility is PRIVATE.
-    recipient_uuid = models.UUIDField(null = True)
+    recipient_uuid = models.UUIDField(null = True, blank = True)
 
     # Source URL of reshared posts. When WE write to the database, this should be set to the host of the post that we reshared.
     source = models.CharField(max_length = 255, null = True)
@@ -185,13 +174,13 @@ class Post(Likeable):
     image_content = models.ImageField(null = True, blank = True, upload_to = 'images/')
 
     # Validated as a JSON list of non-empty strings.
-    categories = models.JSONField(validators = [validate_categories], default = list)
+    categories = models.JSONField(validators = [validate_categories], default = list, blank = True)
 
     # Soft enum type, enforced in Django, not database level
     visibility = models.CharField(max_length = 32, choices = Visibility.choices, default = Visibility.PUBLIC)
 
     # Does not mean anything UNLESS the visibility is private. Image only posts should ALWAYS have this set to true
-    unlisted = models.BooleanField(default = False)
+    unlisted = models.BooleanField(default = False, blank = True)
 
     # Automatically sets the time to now on add and does not allow updates to it -- https://docs.djangoproject.com/en/3.2/ref/models/fields/#django.db.models.DateField.auto_now_add
     published = models.DateTimeField(auto_now_add = True)
@@ -234,8 +223,6 @@ class Comment(Likeable, LocalAuthorMixin):
 
     published = models.DateTimeField(auto_now_add = True)
 
-    author_username = models.CharField(max_length = 32, null = True)
-
     class Meta:
         verbose_name = 'Comment'
         verbose_name_plural = 'Comments'
@@ -245,9 +232,12 @@ class Comment(Likeable, LocalAuthorMixin):
 
         return ContentType[self.content_type]
 
+    def get_local_author_username(self):
+        return Author.objects.filter(uuid = self.author_uuid).get().display_name
+
     def __str__(self):
         # TODO: 2021-10-28 query local authors display name through author uuid, for remote authors TBD
-        return str(self.post.title) + ' | ' + str(self.author_username)
+        return str(self.post.title) + ' | ' + str(Author.objects.filter(uuid = self.author_uuid).get().display_name)
 
 
 class Follower(models.Model, LocalAuthorMixin):
@@ -318,7 +308,7 @@ class Node(AbstractBaseUser):
     prefix = models.CharField(max_length = 32, default = 'service', blank = True)
 
     # The adapter that this node uses
-    adapter_id = models.CharField(max_length = 32, default = None, choices = [(x, x) for x in adapters.registered_adapters.keys()])
+    adapter_id = models.CharField(max_length = 32, default = 'default', choices = [(x, x) for x in adapters.registered_adapters.keys()])
 
     # Auth given to connect to THIS server
     auth_username = models.CharField(max_length = 255)
@@ -373,19 +363,8 @@ class Node(AbstractBaseUser):
 class UUIDRemoteCache(models.Model):
     """A database-level lookup table for caching where a certain uuid for something is stored. Over time, this will make it so we don't have to ping every node to know what server hosts whatever object we want. This should be second priority to checking local objects. So, if you want an author by uuid, check local storage, then check this table."""
 
-    # TODO: 2021-10-21 WIP
-
     # Unique and indexed by default so accesses will be fast
-    # TODO: 2021-10-20 add validator
     uuid = models.UUIDField(primary_key = True)
-
-    dj_content_type = models.ForeignKey(
-        DjangoContentType,
-
-        # These are the choices that are the most readily cacheable
-        limit_choices_to = models.Q(model = 'author') | models.Q(model = 'post') | models.Q(model = 'comment'),
-        on_delete = models.CASCADE
-    )
 
     # Holds the host and prefix for finding the resource, the api should bt the exact same otherwise
     node = models.ForeignKey(Node, on_delete = models.CASCADE)
@@ -395,4 +374,4 @@ class UUIDRemoteCache(models.Model):
         verbose_name = 'UUID Remote Cache'
         verbose_name_plural = 'UUID Remote Cache'
 
-        unique_together = ['uuid', 'dj_content_type']
+        unique_together = ['uuid', 'node']

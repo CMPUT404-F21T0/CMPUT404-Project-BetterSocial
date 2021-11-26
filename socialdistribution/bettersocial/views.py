@@ -8,6 +8,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
 
+from api.helpers import author_helpers, uuid_helpers
 from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment
 from .forms import CommentCreationForm, PostCreationForm
 
@@ -40,7 +41,7 @@ class ArticleDetailView(generic.DetailView):
 class UpdatePostView(generic.UpdateView):
     model = Post
     template_name = 'bettersocial/edit_post.html'
-    fields = ['title', 'description', 'content', 'visibility', 'image_content']
+    form_class = PostCreationForm
 
     def get_success_url(self):
         return reverse_lazy('bettersocial:article_details', kwargs = { 'pk': self.kwargs['pk'] })
@@ -159,15 +160,21 @@ class StreamView(generic.ListView):
     template_name = 'bettersocial/stream.html'
     context_object_name = 'stream_items'
 
-    def get_queryset(self):
-        """Return all post objects."""
-        author_uuid = self.request.user.author.uuid
+    def get_context_data(self, *, object_list = None, **kwargs):
+        context = super().get_context_data(object_list = object_list, **kwargs)
 
-        return Post.objects.filter(
-            (Q(visibility = Post.Visibility.PUBLIC)) |
-            (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author_uuid) & Q(author__following__following_uuid = author_uuid)) |
-            (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author_uuid))
-        ).distinct().order_by('-published')
+        data = list()
+
+        queryset = InboxItem.objects.filter(author = self.request.user.author, inbox_object__iregex = '"type": "post"').all()
+
+        for item in queryset:
+            data.append(item.inbox_object)
+
+        context[self.context_object_name] = data
+
+        print(context[self.context_object_name])
+
+        return context
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -206,13 +213,27 @@ class FollowersView(generic.TemplateView):
         # Different way to get author than normal. This is because we want to utilize the prefetch_related optimization. This ensures that the queries following_set.all() and follower_set.all() are preloaded.
         author: Author = Author.objects.filter(user_id = self.request.user.id).prefetch_related('following_set', 'follower_set').get()
 
-        # Save both as sets because we need to do XOR on them for follower list
-        follower_set = { f.author_local for f in author.follower_set.all() }
-        friends_set = { a for a in author.friends_set.all() }
+        friends_list = author_helpers.get_author_friends(self.request, author)
+        friend_request_list = list()
 
-        # Friend requests are any author that is NOT currently a friend and ALSO follows the current author
-        context['friend_request_list'] = [(author, str(author.uuid)) for author in follower_set ^ friends_set]
-        context['friends_list'] = [(author, str(author.uuid)) for author in friends_set]
+        # map the uuids of all the friends to here
+        friends_list_uuid_pool = { uuid_helpers.extract_uuid_from_id(a['id']) for a in friends_list }
+
+        for inbox_item in InboxItem.objects.filter(author = self.request.user.author, inbox_object__iregex = '"type": "follow"').all():
+
+            # Do not include the request if the author is already a friend
+            if uuid_helpers.extract_uuid_from_id(inbox_item.inbox_object['object']['id']) in friends_list_uuid_pool:
+                print(f'{inbox_item.inbox_object["object"]["id"]} is already a friend, skipping...')
+                continue
+
+            friend_request_list.append(inbox_item.inbox_object)
+
+        context['friend_request_list'] = [
+            (follow_json['actor'], uuid_helpers.extract_uuid_from_id(follow_json['actor']['id'])) for follow_json in friend_request_list
+        ]
+        context['friends_list'] = [
+            (author_json, uuid_helpers.extract_uuid_from_id(author_json['id'])) for author_json in friends_list
+        ]
 
         return context
 
@@ -268,3 +289,35 @@ class CreateFollowingView(generic.CreateView):
         messages.add_message(request, messages.INFO, 'Friend added successfully.')
 
         return HttpResponseRedirect(next_url if next_url else success_url)
+
+@method_decorator(login_required, name = 'dispatch')
+class SharePostView(generic.DetailView):
+    model = Post
+    template_name = 'bettersocial/share_post.html'
+
+@method_decorator(login_required, name = 'dispatch')
+class SharePostActionView(generic.View):
+    def post(self, request, uuid, action, *args, **kwargs):
+        author = Author.objects.filter(uuid = request.user.author.uuid).get()
+        original_post =  Post.objects.get(pk = uuid)
+
+        if action == 'everyone':
+            visibility = "PUBLIC"
+        elif action == 'friends':
+            visibility = "FRIENDS"
+
+        shared_post = Post(
+           author = author,
+        #    source = , NOT SURE WHAT TO PUT HERE or the link for origin
+           origin = original_post.uuid,
+           content_type = original_post.content_type,
+           title = original_post.title,
+           content = original_post.content,
+           description = original_post.description,
+           image_content = original_post.image_content,
+           categories = original_post.categories,
+           visibility=visibility,
+        )
+
+        shared_post.save()
+        return HttpResponseRedirect(reverse('bettersocial:article_details', args = (shared_post.uuid,)))
