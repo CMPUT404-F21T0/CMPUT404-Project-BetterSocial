@@ -3,7 +3,8 @@
     {% load static %}
     <!-- Style Sheet and References -->
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/profile.css' %}">
-    <!-- <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}"> -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}">
+    <script type="text/javascript" src="{% static "bettersocial/profile.js" %}"></script>
 
     <div class="profile">
         <div class="profile-header">
@@ -20,14 +21,15 @@
                 {% endif %}
 
                 {% if author.github_url %}
-                    <p>Github: <a href="{{ current_user.user.github_url }}">{{ author.github_url }}</a></p>
+                    <p>Github: <a href="{{ author.github_url }}">{{ author.github_url }}</a></p>
                 {% endif %}
                 <!-- <p>Bio: This is a John Doe's bio</p> -->
             </div>
 
             <!-- TODO: connect friends list to friend button -->
             <div class="profile-friend-btn">
-                <button>Friends</button>
+                <!-- Don't think we need a friends list button on profile of users -->
+                <!-- <button>Friends</button> -->
                 <!-- TODO: connect edit profile button -->
                 {% if user.author.uuid == author.uuid %}
                     <button>Edit Profile</button>
@@ -50,10 +52,16 @@
                         <button>Follow</button>
                     </form>
                 {% endif %}
+
+                {% if author.github_url %}
+                    <script> var git = "{{ author.github_url }}" </script>
+                    <button onclick="showGitActivity(git)">Github Activity</button>
+                {% endif %}
             </div>
         </div>
 
-
+        <div id="github-activity" style="border: 1px solid black" hidden>
+        </div>
         {% for post in posts %}
 
             {% include 'bettersocial/post-preview.html' %}
