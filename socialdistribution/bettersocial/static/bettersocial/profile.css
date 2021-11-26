@@ -4,6 +4,10 @@ button {
     width: 120px;
 }
 
+#github-activity {
+    padding: 10px;
+}
+
 .iconify {
     color: rgb(64, 64, 64);
 }
