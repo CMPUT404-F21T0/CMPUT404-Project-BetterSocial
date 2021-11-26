@@ -84,7 +84,7 @@ class InboxItemViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Cr
 
         # Modify the request via the adapter method
         if isinstance(request.user, Node):
-            request = request.user.adapter.postInboxItem(request, *args, **kwargs)
+            request = request.user.adapter.post_inbox_item(request, *args, **kwargs)
 
         return super().create(request, *args, **kwargs)
 

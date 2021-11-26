@@ -6,7 +6,7 @@ from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 from rest_framework_nested import serializers as nested_serializers
 
-from api import helpers
+from api.helpers import uuid_helpers
 from bettersocial.models import *
 
 
@@ -45,7 +45,7 @@ class AuthorSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         json = super().to_representation(instance)
 
-        json['id'] = helpers.remove_uuid_dashes(json['id'])
+        json['id'] = uuid_helpers.remove_uuid_dashes(json['id'])
 
         json['url'] = json['id']
 
@@ -92,7 +92,7 @@ class CommentSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         json = super().to_representation(instance)
 
-        json['id'] = helpers.remove_uuid_dashes(json['id'])
+        json['id'] = uuid_helpers.remove_uuid_dashes(json['id'])
 
         return json
 
@@ -157,8 +157,8 @@ class PostSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         json = super().to_representation(instance)
 
-        json['id'] = helpers.remove_uuid_dashes(json['id'])
-        json['comments'] = helpers.remove_uuid_dashes(json['comments'])
+        json['id'] = uuid_helpers.remove_uuid_dashes(json['id'])
+        json['comments'] = uuid_helpers.remove_uuid_dashes(json['comments'])
 
         # Set defaults for source and origin, if they don't exist. This shouldn't really happen but just in case
         if json['source'] is None:
@@ -360,7 +360,7 @@ class InboxItemSerializer(serializers.ModelSerializer):
             'host'
         ])
 
-        author_uuid = helpers.extract_uuid_from_id(data['object']['id'])
+        author_uuid = uuid_helpers.extract_uuid_from_id(data['object']['id'])
 
         if author_uuid is None:
             raise ValidationError({ 'object': 'The author\'s `id` field must have a valid author UUID!' })

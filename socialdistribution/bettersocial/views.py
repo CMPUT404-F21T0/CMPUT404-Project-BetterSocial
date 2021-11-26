@@ -8,6 +8,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
 
+from api.helpers import author_helpers, uuid_helpers
 from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment
 from .forms import CommentCreationForm, PostCreationForm
 
@@ -157,6 +158,7 @@ class InboxView(generic.ListView):
 class StreamView(generic.TemplateView):
     template_name = 'bettersocial/stream.html'
 
+
 @method_decorator(login_required, name = 'dispatch')
 class PostLikesView(generic.ListView):
     model = Post
@@ -193,13 +195,27 @@ class FollowersView(generic.TemplateView):
         # Different way to get author than normal. This is because we want to utilize the prefetch_related optimization. This ensures that the queries following_set.all() and follower_set.all() are preloaded.
         author: Author = Author.objects.filter(user_id = self.request.user.id).prefetch_related('following_set', 'follower_set').get()
 
-        # Save both as sets because we need to do XOR on them for follower list
-        follower_set = { f.author_local for f in author.follower_set.all() }
-        friends_set = { a for a in author.friends_set.all() }
+        friends_list = author_helpers.get_author_friends(self.request, author)
+        friend_request_list = list()
 
-        # Friend requests are any author that is NOT currently a friend and ALSO follows the current author
-        context['friend_request_list'] = [(author, str(author.uuid)) for author in follower_set ^ friends_set]
-        context['friends_list'] = [(author, str(author.uuid)) for author in friends_set]
+        # map the uuids of all the friends to here
+        friends_list_uuid_pool = { uuid_helpers.extract_uuid_from_id(a['id']) for a in friends_list }
+
+        for inbox_item in InboxItem.objects.filter(author = self.request.user.author, inbox_object__iregex = '"type": "follow"').all():
+
+            # Do not include the request if the author is already a friend
+            if uuid_helpers.extract_uuid_from_id(inbox_item.inbox_object['object']['id']) in friends_list_uuid_pool:
+                print(f'{inbox_item.inbox_object["object"]["id"]} is already a friend, skipping...')
+                continue
+
+            friend_request_list.append(inbox_item.inbox_object)
+
+        context['friend_request_list'] = [
+            (follow_json['actor'], uuid_helpers.extract_uuid_from_id(follow_json['actor']['id'])) for follow_json in friend_request_list
+        ]
+        context['friends_list'] = [
+            (author_json, uuid_helpers.extract_uuid_from_id(author_json['id'])) for author_json in friends_list
+        ]
 
         return context
 
