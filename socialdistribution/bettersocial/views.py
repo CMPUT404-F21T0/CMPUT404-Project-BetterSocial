@@ -155,8 +155,26 @@ class InboxView(generic.ListView):
 
 
 @method_decorator(login_required, name = 'dispatch')
-class StreamView(generic.TemplateView):
+class StreamView(generic.ListView):
+    model = Post
     template_name = 'bettersocial/stream.html'
+    context_object_name = 'stream_items'
+
+    def get_context_data(self, *, object_list = None, **kwargs):
+        context = super().get_context_data(object_list = object_list, **kwargs)
+
+        data = list()
+
+        queryset = InboxItem.objects.filter(author = self.request.user.author, inbox_object__iregex = '"type": "post"').all()
+
+        for item in queryset:
+            data.append(item.inbox_object)
+
+        context[self.context_object_name] = data
+
+        print(context[self.context_object_name])
+
+        return context
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -284,10 +302,10 @@ class SharePostActionView(generic.View):
         original_post =  Post.objects.get(pk = uuid)
 
         if action == 'everyone':
-            visibility = "PUBLIC"    
+            visibility = "PUBLIC"
         elif action == 'friends':
             visibility = "FRIENDS"
-       
+
         shared_post = Post(
            author = author,
         #    source = , NOT SURE WHAT TO PUT HERE or the link for origin
