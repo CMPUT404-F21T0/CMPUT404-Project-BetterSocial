@@ -271,3 +271,35 @@ class CreateFollowingView(generic.CreateView):
         messages.add_message(request, messages.INFO, 'Friend added successfully.')
 
         return HttpResponseRedirect(next_url if next_url else success_url)
+
+@method_decorator(login_required, name = 'dispatch')
+class SharePostView(generic.DetailView):
+    model = Post
+    template_name = 'bettersocial/share_post.html'
+
+@method_decorator(login_required, name = 'dispatch')
+class SharePostActionView(generic.View):
+    def post(self, request, uuid, action, *args, **kwargs):
+        author = Author.objects.filter(uuid = request.user.author.uuid).get()
+        original_post =  Post.objects.get(pk = uuid)
+
+        if action == 'everyone':
+            visibility = "PUBLIC"    
+        elif action == 'friends':
+            visibility = "FRIENDS"
+       
+        shared_post = Post(
+           author = author,
+        #    source = , NOT SURE WHAT TO PUT HERE or the link for origin
+           origin = original_post.uuid,
+           content_type = original_post.content_type,
+           title = original_post.title,
+           content = original_post.content,
+           description = original_post.description,
+           image_content = original_post.image_content,
+           categories = original_post.categories,
+           visibility=visibility,
+        )
+
+        shared_post.save()
+        return HttpResponseRedirect(reverse('bettersocial:article_details', args = (shared_post.uuid,)))

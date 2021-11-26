@@ -63,10 +63,10 @@
             {% endif %}
 
             <!-- TODO: Edit href for share post -->
-            <a href="">
+            <a href="{% url 'bettersocial:share_post' post.pk %}">
                 <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
             </a>
-            <a class="icon-text" href="">Share Post</a>
+            <a class="icon-text" href="{% url 'bettersocial:share_post' post.pk %}">Share Post</a>
             <!-- TODO: Edit href for share likes and dynamically add number of likes -->
             <!-- TODO: Pluralize likes  -->
             <a href="">

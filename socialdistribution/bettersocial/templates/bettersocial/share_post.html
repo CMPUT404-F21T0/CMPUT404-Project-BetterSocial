@@ -1,0 +1,18 @@
+{% extends 'bettersocial/base.html' %}
+{% block content %}
+    {% load static %}
+    <!-- Style Sheet and References -->
+    <h1>Share post {{ post.pk }}</h1>
+
+    <form action="{% url 'bettersocial:share_post_action' post.uuid 'everyone' %}" method="post">
+        {% csrf_token %}
+        <button>Share to Everyone</button>
+    </form>
+
+    <form action="{% url 'bettersocial:share_post_action' post.uuid 'friends' %}" method="post">
+        {% csrf_token %}
+        <button>Share to Friends</button>
+    </form>
+
+{% endblock %}
+
