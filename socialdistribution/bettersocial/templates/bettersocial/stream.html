@@ -4,20 +4,19 @@
     {% load static %}
     <!-- Style Sheet and References -->
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/stream.css' %}">
-    <script type="text/javascript" src="{% static "bettersocial/stream.js" %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/post-preview.css' %}">
+    <script type="text/javascript" src="{% static "libs/purify.min.js" %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    {#    <div id="stream_items">#}
-    {#        <p>No posts in stream.</p>#}
-    {#    </div>#}
+    <script type="text/javascript" src="{% static "bettersocial/ajax.js" %}"></script>
 
-    {% if stream_items %}
+    <script>
+        // TODO: Schedule
+        window.onload = () => getAllPosts('{{ user.author.uuid.hex }}');
+    </script>
 
-        {% for post in stream_items %}
-            {% include 'bettersocial/post-preview.html' %}
-        {% endfor %}
-
-    {% else %}
-
-    {% endif %}
+    <div id="stream_items">
+        <p>No posts in stream.</p>
+    </div>
 
 {% endblock %}
