@@ -257,7 +257,9 @@ function getAllPosts(currentUserUUID) {
 
 }
 
-function renderComments(commentsJSON, currentUserUUID) {
+function renderComments(commentsJSON, postJSON, currentUserUUID) {
+
+    console.log(commentsJSON);
 
     let commentContainer = $n(
         'div',
@@ -266,7 +268,7 @@ function renderComments(commentsJSON, currentUserUUID) {
             $n('hr', {}),
             $n('h2', {class: 'post-title'}, 'Comments Section:'),
             $n('div', {class: 'post-content'},
-                [$n('a', {href: `./`}, 'Add Comment')]
+                [$n('a', {href: `./comment/?location=${postJSON.comments}&host=${postJSON.author.host}`}, 'Add Comment')]
             )
         ]
     );
@@ -330,10 +332,13 @@ function renderComments(commentsJSON, currentUserUUID) {
 
 function getSinglePost(post, comments, currentUserUUID) {
 
-    let postView = document.getElementById('post-view');
-    let renderedPost = renderPost(JSON.parse(post), currentUserUUID);
+    let postJSON = JSON.parse(post);
+    let commentsJSON = JSON.parse(comments);
 
-    renderedPost.appendChild(renderComments(JSON.parse(comments), currentUserUUID));
+    let postView = document.getElementById('post-view');
+    let renderedPost = renderPost(postJSON, currentUserUUID);
+
+    renderedPost.appendChild(renderComments(commentsJSON, postJSON, currentUserUUID));
 
     postView.innerHTML = '';
     postView.appendChild(renderedPost);

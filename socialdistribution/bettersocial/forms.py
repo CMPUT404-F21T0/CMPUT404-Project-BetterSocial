@@ -39,5 +39,6 @@ class CommentCreationForm(ModelForm):
         model = Comment
 
         # More fields can be added
-        fields = ['author_uuid',
-                  'comment']
+        fields = [
+            'comment'
+        ]

@@ -1,11 +1,12 @@
 import json
 
 import requests
+import yarl
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
-from django.http import HttpResponseNotFound, HttpRequest
+from django.http import HttpResponseNotFound, HttpRequest, HttpResponseBadRequest
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -14,7 +15,7 @@ from django.views import generic
 from requests.auth import HTTPBasicAuth
 
 from api.helpers import author_helpers, uuid_helpers
-from api.serializers import PostSerializer, CommentSerializer
+from api.serializers import PostSerializer, CommentSerializer, AuthorSerializer
 from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment, Node
 from .forms import CommentCreationForm, PostCreationForm
 
@@ -112,7 +113,7 @@ class ArticleDetailView(generic.TemplateView):
         # context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
 
         context['post'] = json.dumps(post)
-        context['comments'] = json.dumps(comments)
+        context['comments'] = json.dumps(comments['comments'])
 
         return context
 
@@ -202,6 +203,61 @@ class AddCommentView(generic.CreateView):
     form_class = CommentCreationForm
     template_name = 'bettersocial/add_comment.html'
 
+    def get(self, request, *args, **kwargs):
+
+        try:
+            location = self.request.GET['location']
+            host = self.request.GET['host']
+
+            # JavaScript moment
+            if location == 'undefined' or host == 'undefined':
+                return HttpResponseBadRequest('both query parameters must be defined!')
+
+        except KeyError:
+            return HttpResponseBadRequest('you must the location and host query parameters in the request!')
+
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        form = self.get_form()
+
+        if form.is_valid():
+
+            post_id = uuid_helpers.extract_post_uuid_from_id(self.request.GET['location'])
+            if Post.objects.filter(pk = post_id).exists():
+                return super().post(request, *args, **kwargs)
+            else:
+                # Post must be remote, sending to url
+                node = Node.objects.filter(host__contains = self.request.GET['host']).get()
+
+                form_comment: Comment = form.instance
+
+                comment_json = {
+                    'type': 'comment',
+                    'author': AuthorSerializer(self.request.user.author, context = { 'request': self.request }).data,
+                    'comment': form_comment.comment,
+                    'contentType': form_comment.content_type,
+                }
+
+                response = requests.post(
+                    yarl.URL(self.request.GET['location']).human_repr(),
+                    headers = { 'Accept': 'application/json' },
+                    auth = HTTPBasicAuth(node.node_username, node.node_password),
+                    json = comment_json
+                )
+
+                # print(RemoteCommentSerializer(unsaved_comment, context = {'request': self.request}).data)
+
+                if response.ok:
+                    print(response.content)
+                    return HttpResponseRedirect(self.get_success_url())
+                else:
+                    return HttpResponseBadRequest(response.content)
+
+        else:
+            return self.form_invalid(form)
+
     # Presets the author uuid to the currently logged in user
     # https://stackoverflow.com/questions/54153528/how-to-populate-existing-html-form-with-django-updateview
     def get_initial(self):
@@ -213,9 +269,7 @@ class AddCommentView(generic.CreateView):
     # Injections the proper post id for the comment
     def form_valid(self, form):
         form.instance.post_id = self.kwargs['pk']
-        '''
-        form = CommentCreationForm(initial={'author_uuid': self.request.user.author.uuid})
-        '''
+        form.instance.author_uuid = self.request.user.author.uuid
         return super().form_valid(form)
 
     def get_success_url(self):
