@@ -14,7 +14,7 @@ from django.views import generic
 from requests.auth import HTTPBasicAuth
 
 from api.helpers import author_helpers, uuid_helpers
-from api.serializers import PostSerializer
+from api.serializers import PostSerializer, CommentSerializer
 from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment, Node
 from .forms import CommentCreationForm, PostCreationForm
 
@@ -33,13 +33,17 @@ class ArticleDetailView(generic.TemplateView):
             return self.render_to_response(context)
 
     def _find_post(self, context, **kwargs):
-        """Returns the JSON of the Post, if found"""
+        """Returns the JSON of the post, if found, and its comments, if applicable"""
 
         # First try to find the post locally
         post_qs = Post.objects.filter(pk = self.kwargs['pk'])
 
         if post_qs.exists():
-            return PostSerializer(post_qs.get(), context = { 'request': self.request }).data
+            post = post_qs.get()
+            comments = post.comments.order_by('-published')
+
+            return PostSerializer(post, context = { 'request': self.request }).data, \
+                   CommentSerializer(comments, context = { 'request': self.request }, many = True).data
 
         # If that fails, try to find it in the author's inbox (maybe it's private but on here)
         inbox_items = InboxItem.objects.filter(author = self.request.user.author, inbox_object__iregex = '"type": "post"').all()
@@ -51,16 +55,25 @@ class ArticleDetailView(generic.TemplateView):
                 if item.inbox_object['visibility'].upper() == Post.Visibility.PUBLIC.value.upper():
                     node = Node.objects.filter(host__contains = item.inbox_object['author']['host']).get()
 
-                    response = requests.get(
+                    post_response = requests.get(
                         item.inbox_object['url'],
                         headers = { 'Accept': 'application/json' },
                         auth = HTTPBasicAuth(node.node_username, node.node_password)
                     )
 
-                    response.raise_for_status()
+                    post_response.raise_for_status()
 
-                    if response.ok:
-                        return response.json()
+                    comments_response = requests.get(
+                        item.inbox_object['comments'],
+                        params = { 'size': 100 },
+                        headers = { 'Accept': 'application/json' },
+                        auth = HTTPBasicAuth(node.node_username, node.node_password)
+                    )
+
+                    comments_response.raise_for_status()
+
+                    if post_response.ok:
+                        return post_response.json(), comments_response.json() if comments_response.ok else []
 
                 else:
                     return item.inbox_object
@@ -72,7 +85,7 @@ class ArticleDetailView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        post = self._find_post(context, **kwargs)
+        post, comments = self._find_post(context, **kwargs)
 
         if post is None:
             return context
@@ -82,8 +95,6 @@ class ArticleDetailView(generic.TemplateView):
 
         # Make author UUID available in author._uuid
         post['author']['_uuid'] = uuid_helpers.extract_author_uuid_from_id(post['author']['id']).hex
-
-        print(post)
 
         # post_uuid = self.kwargs['pk']
         # post = Post.objects.get(pk = post_uuid)
@@ -99,7 +110,9 @@ class ArticleDetailView(generic.TemplateView):
         # author_followers = Following.objects.filter(Q(following_uuid = author_uuid) & ~Q(author = user_uuid)).values_list("author__uuid")
         # friends_to_hide = author_following.intersection(author_followers)
         # context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
+
         context['post'] = json.dumps(post)
+        context['comments'] = json.dumps(comments)
 
         return context
 

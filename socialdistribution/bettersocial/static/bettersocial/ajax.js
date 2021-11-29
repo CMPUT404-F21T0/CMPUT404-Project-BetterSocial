@@ -181,7 +181,7 @@ function renderPostFooter(postJSON, currentUserUUID) {
     footer.appendChild($n(
         'a',
         {class: 'icon-text', href: `/article/${postJSON._uuid}/share`},
-        'Share Post'
+        'Likes'
     ));
 
     footer.appendChild($n(
@@ -257,13 +257,85 @@ function getAllPosts(currentUserUUID) {
 
 }
 
-function getSinglePost(post, currentUserUUID) {
+function renderComments(commentsJSON, currentUserUUID) {
+
+    let commentContainer = $n(
+        'div',
+        {},
+        [
+            $n('hr', {}),
+            $n('h2', {class: 'post-title'}, 'Comments Section:'),
+            $n('div', {class: 'post-content'},
+                [$n('a', {href: `./`}, 'Add Comment')]
+            )
+        ]
+    );
+
+    // <h2 class="post-title">Comment Section:</h2>
+    // {% if not comments %}
+    // <div class = "post-content">No comments... <a href="{% url 'bettersocial:add_comment' post.pk %}">Add the first comment!</a></div>
+    // <br/>
+    // {% else %}
+    // <div class = "post-content"><a href="{% url 'bettersocial:add_comment' post.pk %}">Add comment!</a></div>
+    // <br/>
+    // <hr>
+    //     {% for comment in comments %}
+    //     <div class = "post-content"> <strong>{{ comment.get_local_author_username }} -  {{ comment.published }}</strong> </div>
+    //     <div class = "post-content"> {{ comment.comment }} </div>
+    //     <hr/>
+    //     {% endfor %}
+    //     {% endif %}
+
+
+    if (commentsJSON.length < 1) {
+        commentContainer.appendChild($n('hr', {}));
+        commentContainer.appendChild($n(
+            'div',
+            {class: 'post-content'},
+            'No Comments... Add the first one!'
+        ));
+        commentContainer.appendChild($n('br', {}));
+    }
+
+    for (const comment of commentsJSON) {
+        commentContainer.appendChild($n('hr', {}));
+        commentContainer.appendChild($n(
+            'div',
+            {class: 'post-content'},
+            [
+                $n(
+                    'div',
+                    {class: 'post-content'},
+                    [
+                        $n(
+                            'strong',
+                            {class: 'post-content'},
+                            `${comment.author.displayName} - ${new Date(comment.published).toLocaleString()}`
+                        )
+                    ]
+                ),
+                $n(
+                    'div',
+                    {class: 'post-content'},
+                    DOMPurify.sanitize(comment.comment)
+                )
+            ]
+        ));
+        commentContainer.appendChild($n('br', {}));
+    }
+
+    return commentContainer;
+
+}
+
+function getSinglePost(post, comments, currentUserUUID) {
 
     let postView = document.getElementById('post-view');
-    let renderedPost = postView.appendChild(renderPost(JSON.parse(post), currentUserUUID));
+    let renderedPost = renderPost(JSON.parse(post), currentUserUUID);
+
+    renderedPost.appendChild(renderComments(JSON.parse(comments), currentUserUUID));
 
     postView.innerHTML = '';
-
     postView.appendChild(renderedPost);
 
 }

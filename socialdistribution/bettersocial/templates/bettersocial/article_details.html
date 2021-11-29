@@ -10,12 +10,12 @@
 
     <script>
         window.onload = () => {
-            getSinglePost('{{ post | escapejs }}', '{{ user.author.uuid.hex }}');
+            getSinglePost('{{ post | escapejs }}', '{{ comments | escapejs }}', '{{ user.author.uuid.hex }}');
         };
     </script>
 
     <h1>Viewing Post</h1>
-    <div id="post-view" class="post">
+    <div id="post-view">
         Loading...
     </div>
     {% comment %}    <div class="post">
