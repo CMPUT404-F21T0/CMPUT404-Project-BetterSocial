@@ -89,7 +89,7 @@ def approved_follow(remote_uuid: Union[str, UUID], author_uuid: Union[str, UUID]
         # Check all of their followers -- IFF we find one whose UUID matches our own author's UUID, then we know they have approved the follow.
         if response.status_code == 200:
             for author_json in response.json()['items']:
-                if author_uuid == uuid_helpers.extract_uuid_from_id(author_json['id']):
+                if author_uuid == uuid_helpers.extract_author_uuid_from_id(author_json['id']):
                     return True
 
     else:
@@ -108,7 +108,7 @@ def approved_follow(remote_uuid: Union[str, UUID], author_uuid: Union[str, UUID]
                 cache_host_of_uuid(remote_uuid, node)
 
                 for author_json in response.json()['items']:
-                    if author_uuid == uuid_helpers.extract_uuid_from_id(author_json['id']):
+                    if author_uuid == uuid_helpers.extract_author_uuid_from_id(author_json['id']):
                         return True
 
     return False

@@ -217,22 +217,22 @@ class FollowersView(generic.TemplateView):
         friend_request_list = list()
 
         # map the uuids of all the friends to here
-        friends_list_uuid_pool = { uuid_helpers.extract_uuid_from_id(a['id']) for a in friends_list }
+        friends_list_uuid_pool = { uuid_helpers.extract_author_uuid_from_id(a['id']) for a in friends_list }
 
         for inbox_item in InboxItem.objects.filter(author = self.request.user.author, inbox_object__iregex = '"type": "follow"').all():
 
             # Do not include the request if the author is already a friend
-            if uuid_helpers.extract_uuid_from_id(inbox_item.inbox_object['object']['id']) in friends_list_uuid_pool:
+            if uuid_helpers.extract_author_uuid_from_id(inbox_item.inbox_object['object']['id']) in friends_list_uuid_pool:
                 print(f'{inbox_item.inbox_object["object"]["id"]} is already a friend, skipping...')
                 continue
 
             friend_request_list.append(inbox_item.inbox_object)
 
         context['friend_request_list'] = [
-            (follow_json['actor'], uuid_helpers.extract_uuid_from_id(follow_json['actor']['id'])) for follow_json in friend_request_list
+            (follow_json['actor'], uuid_helpers.extract_author_uuid_from_id(follow_json['actor']['id'])) for follow_json in friend_request_list
         ]
         context['friends_list'] = [
-            (author_json, uuid_helpers.extract_uuid_from_id(author_json['id'])) for author_json in friends_list
+            (author_json, uuid_helpers.extract_author_uuid_from_id(author_json['id'])) for author_json in friends_list
         ]
 
         return context

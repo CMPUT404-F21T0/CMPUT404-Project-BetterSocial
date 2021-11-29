@@ -360,7 +360,7 @@ class InboxItemSerializer(serializers.ModelSerializer):
             'host'
         ])
 
-        author_uuid = uuid_helpers.extract_uuid_from_id(data['object']['id'])
+        author_uuid = uuid_helpers.extract_author_uuid_from_id(data['object']['id'])
 
         if author_uuid is None:
             raise ValidationError({ 'object': 'The author\'s `id` field must have a valid author UUID!' })
