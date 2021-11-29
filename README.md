@@ -1,5 +1,14 @@
 # CMPUT404-Project-BetterSocial
+
 CMPUT 404 Fall 2021 Group Project
+
+## Resources / Dependencies Used
+
+- https://github.com/CMPUT404W21H02-Project/Citrus-Network
+  - Mostly as an example of how things should behave, wrt to APIs and FE
+- https://gist.github.com/thom-nic/1242597
+- https://github.com/cure53/DOMPurify
+- https://marked.js.org/
 
 ## Initial Setup
 

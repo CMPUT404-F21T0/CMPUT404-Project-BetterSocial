@@ -1,11 +1,24 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
-{% load static %}
-<!-- Style Sheet and References -->
-<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/post-preview.css' %}">
-    
-<h1>Viewing Post</h1>
-    <div class="post">
+    {% load static %}
+    <!-- Style Sheet and References -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/post-preview.css' %}">
+    <script type="text/javascript" src="{% static "libs/purify.min.js" %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script type="text/javascript" src="{% static "bettersocial/ajax.js" %}"></script>
+
+    <script>
+        window.onload = () => {
+            getSinglePost('{{ post | escapejs }}', '{{ comments | escapejs }}', '{{ user.author.uuid.hex }}');
+        };
+    </script>
+
+    <h1>Viewing Post</h1>
+    <div id="post-view">
+        Loading...
+    </div>
+    {% comment %}    <div class="post">
         <div class="post-container">
             {% csrf_token %}
             <h2 class="post-title">{{ post.title }}</h2>
@@ -38,10 +51,10 @@
             {% endif %}
         </div>
         <h2 class="post-title">Comment Section:</h2>
-        {% if not comments %} 
+        {% if not comments %}
             <div class = "post-content">No comments... <a href="{% url 'bettersocial:add_comment' post.pk %}">Add the first comment!</a></div>
             <br/>
-        {% else %} 
+        {% else %}
             <div class = "post-content"><a href="{% url 'bettersocial:add_comment' post.pk %}">Add comment!</a></div>
             <br/>
             <hr>
@@ -51,5 +64,5 @@
                 <hr/>
             {% endfor %}
         {% endif %}
-    </div>
+    </div>{% endcomment %}
 {% endblock %}

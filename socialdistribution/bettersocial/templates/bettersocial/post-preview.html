@@ -1,3 +1,4 @@
+{% comment %}
 {# `post`, and `user` must be available. #}
 {% if post %}
     {% load static %}
@@ -7,7 +8,7 @@
         <div class="post-header">
             <!-- TODO: add if user has profile pic show pic if not show icon -->
             <div class="left">
-                {% comment %}{% url 'bettersocial:profile' post.author.uuid %}{% endcomment %}
+                {% url 'bettersocial:profile' post.author.uuid %}
                 <a href="{{ post.id }}">
                         <span class="iconify" data-icon="iconoir:profile-circled" data-width="42"
                               data-height="42"></span>
@@ -66,18 +67,18 @@
             {% endif %}
 
             <!-- TODO: Edit href for share post -->
-            {% comment %}{% url 'bettersocial:share_post' post.pk %}{% endcomment %}
+            {% url 'bettersocial:share_post' post.pk %}
             <a href="">
                 <span class="iconify" data-icon="bi:share" data-width="30" data-height="30"></span>
             </a>
-            {% comment %}{% url 'bettersocial:share_post' post.pk %}{% endcomment %}
+            {% url 'bettersocial:share_post' post.pk %}
             <a class="icon-text" href="">Share Post</a>
             <!-- TODO: Edit href for share likes and dynamically add number of likes -->
             <!-- TODO: Pluralize likes  -->
             <a href="">
                 <span class="iconify" data-icon="ant-design:like-outlined" data-width="30" data-height="30"></span>
             </a>
-            {% comment %}{% url 'bettersocial:post_likes_list' post.pk %}{% endcomment %}
+            {% url 'bettersocial:post_likes_list' post.pk %}
             <a class="icon-text" href="">Likes</a>
             <!-- TODO: Edit href for comments and dynamically add number of comments -->
             <!-- TODO: Pluralize comments  -->
@@ -86,7 +87,7 @@
                           data-height="30"></span>
             </a>
             <a class="icon-text"
-                    {% comment %}{% url 'bettersocial:article_details' post.pk %}{% endcomment %}
+                    {% url 'bettersocial:article_details' post.pk %}
                href="{{ post.id }}"> {{ post.comments.all | length }}
                 Comment{{ post.comments.all | length | pluralize }}</a>
         </div>
@@ -96,3 +97,4 @@
 {% else %}
     <p>You must include `post` in the namespace!</p>
 {% endif %}
+{% endcomment %}

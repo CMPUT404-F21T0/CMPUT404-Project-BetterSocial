@@ -4,20 +4,26 @@
     {% load static %}
     <!-- Style Sheet and References -->
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/stream.css' %}">
-    <script type="text/javascript" src="{% static "bettersocial/stream.js" %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/friends.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/post-preview.css' %}">
+    <script type="text/javascript" src="{% static "libs/purify.min.js" %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    {#    <div id="stream_items">#}
-    {#        <p>No posts in stream.</p>#}
-    {#    </div>#}
+    <script type="text/javascript" src="{% static "bettersocial/ajax.js" %}"></script>
 
-    {% if stream_items %}
+    <script>
+        // TODO: Schedule
+        const refresh = () => getAllPosts('{{ user.author.uuid.hex }}');
+        window.onload = refresh;
+    </script>
 
-        {% for post in stream_items %}
-            {% include 'bettersocial/post-preview.html' %}
-        {% endfor %}
+    <div class="flex-container" style="justify-content: center; margin-bottom: 1em;">
+        <input class="button" style="width: 20em;" id="refresh-button" type="button" onclick="refresh()"
+               value="Refresh">
+    </div>
 
-    {% else %}
-
-    {% endif %}
+    <div id="stream_items">
+        <p>No posts in stream.</p>
+    </div>
 
 {% endblock %}

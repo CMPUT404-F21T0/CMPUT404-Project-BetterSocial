@@ -9,6 +9,7 @@ from rest_framework.response import Response
 
 from api import pagination
 from api import serializers
+from api.helpers import uuid_helpers
 from bettersocial import models
 from bettersocial.models import Post, InboxItem, Node
 
@@ -131,6 +132,13 @@ class AllRemotePostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         for item in queryset:
             data.append(item.inbox_object)
 
+        for post in data:
+            # Make post UUID available in _uuid
+            post['_uuid'] = uuid_helpers.extract_post_uuid_from_id(post['id']).hex
+
+            # Make author UUID available in author._uuid
+            post['author']['_uuid'] = uuid_helpers.extract_author_uuid_from_id(post['author']['id']).hex
+
         return Response(data)
 
 
@@ -146,7 +154,16 @@ class AllPostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
         self.kwargs['author_uuid'] = request.user.author.uuid
 
-        return super().list(request, *args, **kwargs)
+        response = super().list(request, *args, **kwargs)
+
+        for post in response.data:
+            # Make post UUID available in _uuid
+            post['_uuid'] = uuid_helpers.extract_post_uuid_from_id(post['id']).hex
+
+            # Make author UUID available in author._uuid
+            post['author']['_uuid'] = uuid_helpers.extract_author_uuid_from_id(post['author']['id']).hex
+
+        return response
 
     def get_queryset(self):
 
