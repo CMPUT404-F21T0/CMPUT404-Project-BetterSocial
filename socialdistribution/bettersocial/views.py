@@ -1,39 +1,106 @@
+import json
+
+import requests
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
+from django.http import HttpResponseNotFound, HttpRequest
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
+from requests.auth import HTTPBasicAuth
 
 from api.helpers import author_helpers, uuid_helpers
-from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment
+from api.serializers import PostSerializer
+from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment, Node
 from .forms import CommentCreationForm, PostCreationForm
 
 
 @method_decorator(login_required, name = 'dispatch')
-class ArticleDetailView(generic.DetailView):
-    model = Post
+class ArticleDetailView(generic.TemplateView):
     template_name = 'bettersocial/article_details.html'
 
-    def get_context_data(self, **kwargs):
-        context = super(ArticleDetailView, self).get_context_data(**kwargs)
-        post_uuid = self.kwargs['pk']
-        post = Post.objects.get(pk = post_uuid)
-        author_uuid = post.author.uuid
-        user_uuid = self.request.user.author.uuid
+    def get(self, request: HttpRequest, *args, **kwargs):
 
-        if user_uuid == author_uuid:
-            context["comments"] = post.comments.all()
+        context = self.get_context_data(**kwargs)
+
+        if context.get('post') is None:
+            return HttpResponseNotFound("The post could not be found!")
+        else:
+            return self.render_to_response(context)
+
+    def _find_post(self, context, **kwargs):
+        """Returns the JSON of the Post, if found"""
+
+        # First try to find the post locally
+        post_qs = Post.objects.filter(pk = self.kwargs['pk'])
+
+        if post_qs.exists():
+            return PostSerializer(post_qs.get(), context = { 'request': self.request }).data
+
+        # If that fails, try to find it in the author's inbox (maybe it's private but on here)
+        inbox_items = InboxItem.objects.filter(author = self.request.user.author, inbox_object__iregex = '"type": "post"').all()
+
+        for item in inbox_items:
+            if uuid_helpers.extract_post_uuid_from_id(item.inbox_object['id']) == self.kwargs['pk']:
+
+                # IF the post is public, we should get the most recent version
+                if item.inbox_object['visibility'].upper() == Post.Visibility.PUBLIC.value.upper():
+                    node = Node.objects.filter(host__contains = item.inbox_object['author']['host']).get()
+
+                    response = requests.get(
+                        item.inbox_object['url'],
+                        headers = { 'Accept': 'application/json' },
+                        auth = HTTPBasicAuth(node.node_username, node.node_password)
+                    )
+
+                    response.raise_for_status()
+
+                    if response.ok:
+                        return response.json()
+
+                else:
+                    return item.inbox_object
+
+        # All else fails, try to find it remotely (this must be a public post)
+
+        pass
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        post = self._find_post(context, **kwargs)
+
+        if post is None:
             return context
 
-        # finding author's friends (excluding the user) in order to hide author's friend's comments from user
-        author_following = Following.objects.filter(Q(author = author_uuid) & ~Q(following_uuid = user_uuid)).values_list("following_uuid")
-        author_followers = Following.objects.filter(Q(following_uuid = author_uuid) & ~Q(author = user_uuid)).values_list("author__uuid")
-        friends_to_hide = author_following.intersection(author_followers)
-        context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
+        # Make post UUID available in _uuid
+        post['_uuid'] = uuid_helpers.extract_post_uuid_from_id(post['id']).hex
+
+        # Make author UUID available in author._uuid
+        post['author']['_uuid'] = uuid_helpers.extract_author_uuid_from_id(post['author']['id']).hex
+
+        print(post)
+
+        # post_uuid = self.kwargs['pk']
+        # post = Post.objects.get(pk = post_uuid)
+        # author_uuid = post.author.uuid
+        # user_uuid = self.request.user.author.uuid
+        #
+        # if user_uuid == author_uuid:
+        #     context["comments"] = post.comments.all()
+        #     return context
+        #
+        # # finding author's friends (excluding the user) in order to hide author's friend's comments from user
+        # author_following = Following.objects.filter(Q(author = author_uuid) & ~Q(following_uuid = user_uuid)).values_list("following_uuid")
+        # author_followers = Following.objects.filter(Q(following_uuid = author_uuid) & ~Q(author = user_uuid)).values_list("author__uuid")
+        # friends_to_hide = author_following.intersection(author_followers)
+        # context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
+        context['post'] = json.dumps(post)
+
         return context
 
 
@@ -290,16 +357,18 @@ class CreateFollowingView(generic.CreateView):
 
         return HttpResponseRedirect(next_url if next_url else success_url)
 
+
 @method_decorator(login_required, name = 'dispatch')
 class SharePostView(generic.DetailView):
     model = Post
     template_name = 'bettersocial/share_post.html'
 
+
 @method_decorator(login_required, name = 'dispatch')
 class SharePostActionView(generic.View):
     def post(self, request, uuid, action, *args, **kwargs):
         author = Author.objects.filter(uuid = request.user.author.uuid).get()
-        original_post =  Post.objects.get(pk = uuid)
+        original_post = Post.objects.get(pk = uuid)
 
         if action == 'everyone':
             visibility = "PUBLIC"
@@ -307,16 +376,16 @@ class SharePostActionView(generic.View):
             visibility = "FRIENDS"
 
         shared_post = Post(
-           author = author,
-        #    source = , NOT SURE WHAT TO PUT HERE or the link for origin
-           origin = original_post.uuid,
-           content_type = original_post.content_type,
-           title = original_post.title,
-           content = original_post.content,
-           description = original_post.description,
-           image_content = original_post.image_content,
-           categories = original_post.categories,
-           visibility=visibility,
+            author = author,
+            #    source = , NOT SURE WHAT TO PUT HERE or the link for origin
+            origin = original_post.uuid,
+            content_type = original_post.content_type,
+            title = original_post.title,
+            content = original_post.content,
+            description = original_post.description,
+            image_content = original_post.image_content,
+            categories = original_post.categories,
+            visibility = visibility,
         )
 
         shared_post.save()

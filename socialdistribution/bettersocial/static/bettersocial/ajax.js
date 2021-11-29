@@ -256,3 +256,14 @@ function getAllPosts(currentUserUUID) {
     });
 
 }
+
+function getSinglePost(post, currentUserUUID) {
+
+    let postView = document.getElementById('post-view');
+    let renderedPost = postView.appendChild(renderPost(JSON.parse(post), currentUserUUID));
+
+    postView.innerHTML = '';
+
+    postView.appendChild(renderedPost);
+
+}
