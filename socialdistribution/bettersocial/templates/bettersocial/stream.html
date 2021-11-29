@@ -4,6 +4,7 @@
     {% load static %}
     <!-- Style Sheet and References -->
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/stream.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/friends.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/post-preview.css' %}">
     <script type="text/javascript" src="{% static "libs/purify.min.js" %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -12,8 +13,14 @@
 
     <script>
         // TODO: Schedule
-        window.onload = () => getAllPosts('{{ user.author.uuid.hex }}');
+        const refresh = () => getAllPosts('{{ user.author.uuid.hex }}');
+        window.onload = refresh;
     </script>
+
+    <div class="flex-container" style="justify-content: center; margin-bottom: 1em;">
+        <input class="button" style="width: 20em;" id="refresh-button" type="button" onclick="refresh()"
+               value="Refresh">
+    </div>
 
     <div id="stream_items">
         <p>No posts in stream.</p>
