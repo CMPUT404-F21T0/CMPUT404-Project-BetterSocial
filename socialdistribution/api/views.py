@@ -34,8 +34,8 @@ class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
         return response
 
 
-# class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
-#     queryset = models.Follower
+class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+    queryset = models.Follower
 
 
 class PostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):

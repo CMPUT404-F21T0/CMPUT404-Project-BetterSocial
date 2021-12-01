@@ -205,11 +205,11 @@ class ProfileActionView(generic.View):
                 'host': author_serialized['host'],
                 'displayName': author.display_name,
                 'github': author.github_url,
-                'profileImage': author_serialized['profileImage']
+                'profileImage': author_serialized['profileImage'] or ''
             }
 
             # TODO: need foreign author uuid with remote host url
-            url = yarl.URL(yarl.URL(node.host) / node.prefix / 'author' / author.uuid / uuid).human_repr()
+            url = (yarl.URL(node.host) / node.prefix / 'author' / author.uuid / 'followers' / uuid).human_repr()
             response = requests.post(
                 url,
                 headers = { 'Accept': 'application/json' },
