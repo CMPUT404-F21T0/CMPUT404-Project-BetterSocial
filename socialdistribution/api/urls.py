@@ -15,7 +15,7 @@ router.register(r'remote-posts', views.AllRemotePostsViewSet, basename = 'remote
 author_router = routers.NestedSimpleRouter(router, r'authors?', lookup = 'author')
 author_router.register(r'posts', views.PostViewSet, basename = 'post')
 author_router.register(r'inbox', views.InboxItemViewSet, basename = 'inbox')
-author_router.register(r'followers', views.FollowerViewSet, basename = 'follower')
+# author_router.register(r'followers', views.FollowerViewSet)
 
 post_router = routers.NestedSimpleRouter(author_router, r'posts', lookup = 'post')
 post_router.register(r'comments', views.CommentViewSet, basename = 'comment')
