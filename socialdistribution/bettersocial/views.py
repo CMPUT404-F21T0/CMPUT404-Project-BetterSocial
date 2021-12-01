@@ -208,7 +208,8 @@ class ProfileActionView(generic.View):
                 'profileImage': author_serialized['profileImage']
             }
 
-            url = yarl.URL(yarl.URL(node.host) / node.prefix / 'author' / author.uuid / '').human_repr()
+            # TODO: need foreign author uuid with remote host url
+            url = yarl.URL(yarl.URL(node.host) / node.prefix / 'author' / author.uuid / uuid).human_repr()
             response = requests.post(
                 url,
                 headers = { 'Accept': 'application/json' },
