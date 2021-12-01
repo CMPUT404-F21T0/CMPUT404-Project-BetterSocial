@@ -154,7 +154,23 @@ class ProfileView(generic.base.TemplateView):
             context['posts'] = author.post_set.all()
         else:
             context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
-            context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
+            if Author.objects.filter(uuid = user_uuid).exists():
+                context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
+            else:
+                # TODO: make sure this works
+                node = Node.objects.filter(host__contains = self.request.GET['host']).get()
+                url = yarl.URL(node.host + '/author/' + author_uuid + '/followers/' + user_uuid).human_repr()
+                response = requests.get(
+                    url,
+                    headers = { 'Accept': 'application/json' },
+                    auth = HTTPBasicAuth(node.node_username, node.node_password),
+                )
+
+                if response.ok:
+                    print(response.content)
+                    context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
+                else:
+                    context['user_following_author'] = False
 
             # TODO: Might only need to have Public posts to be queried or publick and friends posts?
             context['posts'] = Post.objects.filter(
@@ -176,6 +192,37 @@ class ProfileActionView(generic.View):
         elif action == 'unfollow':
             Following.objects.filter(following_uuid = uuid, author = author).delete()
             Follower.objects.filter(follower_uuid = author.uuid, author_id = uuid).delete()
+
+        # If target user is not local, need to send api request
+        if not Author.objects.filter(uuid = uuid).exists():
+            node = Node.objects.filter(host__contains = self.request.GET['host']).get()
+
+            author_serialized = AuthorSerializer(author, context = { 'request': self.request }).data
+            follower_json = {
+                'type': 'author',
+                'id': author_serialized['id'],
+                'url': author_serialized['url'],
+                'host': author_serialized['host'],
+                'displayName': author.display_name,
+                'github': author.github_url,
+                'profileImage': author_serialized['profileImage']
+            }
+
+            url = yarl.URL(yarl.URL(node.host) / node.prefix / 'author' / author.uuid / '').human_repr()
+            response = requests.post(
+                url,
+                headers = { 'Accept': 'application/json' },
+                auth = HTTPBasicAuth(node.node_username, node.node_password),
+                json = follower_json
+            )
+
+            # print(RemoteCommentSerializer(unsaved_comment, context = {'request': self.request}).data)
+
+            if response.ok:
+                print(response.content)
+            else:
+                return HttpResponseBadRequest(response.content)
+
         return HttpResponseRedirect(reverse('bettersocial:profile', args = (uuid,)))
 
 
