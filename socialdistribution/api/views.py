@@ -12,6 +12,8 @@ from api import serializers
 from api.helpers import uuid_helpers
 from bettersocial import models
 from bettersocial.models import Post, InboxItem, Node
+from socialdistribution.api.serializers import AuthorSerializer
+from socialdistribution.bettersocial.models import Author, Follower
 
 
 # -- API SPEC -- #
@@ -49,7 +51,9 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         
         Checks if the provided foreign_uuid is a follower of the user
         '''
-        response = super().retrieve(request, *args, **kwargs)
+        foreign_uuid = kwargs['pk']
+        follower = Follower.objects.filter(follower_uuid=foreign_uuid).exists()
+        return Response({'is_follower': str(follower)})
 
     
     def list(self, request, *args, **kwargs):
@@ -58,14 +62,16 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         
         Gets list of authors who are the author_uuid's followers
         '''
-        response = super().list(request, *args, **kwargs)
+        # response = super().list(request, *args, **kwargs)
 
-        root_json = OrderedDict()
+        response = {'type': 'followers'}
+        items = list()
 
-        root_json['type'] = 'followers'
-        root_json['comments'] = response.data
-
-        response.data = root_json
+        author = Author.objects.filter(uuid = request.user.author.uuid).get()
+        followers = Follower.objects.filter(author=author)
+        for follower in followers:
+            
+            items.append(AuthorSerializer())
 
         return response
 
@@ -76,8 +82,10 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
 
         Adds a follower (must be authenticated)
         '''
-
-        return super().update(request, *args, **kwargs)
+        author = Author.objects.filter(uuid = kwargs['author_pk']).get()
+        foreign_uuid = kwargs['pk']
+        Follower(author = author, follower_uuid = foreign_uuid)
+        return Response()
 
     def destroy(self, request, *args, **kwargs):
         '''
@@ -85,7 +93,9 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
 
         Remove a follower
         '''
-        return super().destroy(request, *args, **kwargs)
+        foreign_uuid = kwargs['pk']
+        Follower.objects.filter(follower_uuid=foreign_uuid).delete()
+        return Response()
 
 
 class PostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
