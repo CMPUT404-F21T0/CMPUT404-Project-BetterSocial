@@ -4,6 +4,7 @@
 
     <!-- Style Sheet and References -->
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/postapost.css' %}">
+    <script type="text/javascript" src="{% static "bettersocial/post.js" %}"></script>
 
     <h1>Post a Post</h1>
 
@@ -21,7 +22,7 @@
                     {{ form.title }}
                 </div>
             </div>
-
+            
             <div class="row">
                 <div class="size-25">
                     {{ form.content_type.label_tag }}
@@ -41,6 +42,7 @@
             </div>
 
             <div class="row">
+                {{ form.media }}
                 <div class="size-25">
                     {{ form.content.label_tag }}
                 </div>
@@ -64,6 +66,9 @@
                 </div>
                 <div class="size-75">
                     {{ form.categories }}
+                    
+                    <button onclick="enterTagFunction()" type="button">Enter Tag</button>
+
                 </div>
             </div>
 

@@ -1,9 +1,12 @@
 import json
+from django.contrib.auth.forms import PasswordChangeForm
 
 import requests
 import yarl
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
 from django.http import HttpResponseNotFound, HttpRequest, HttpResponseBadRequest
@@ -17,7 +20,7 @@ from requests.auth import HTTPBasicAuth
 from api.helpers import author_helpers, uuid_helpers
 from api.serializers import PostSerializer, CommentSerializer, AuthorSerializer
 from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment, Node
-from .forms import CommentCreationForm, PostCreationForm
+from .forms import CommentCreationForm, PostCreationForm, EditProfileForm
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -113,7 +116,7 @@ class ArticleDetailView(generic.TemplateView):
         # context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
 
         context['post'] = json.dumps(post)
-        context['comments'] = json.dumps(comments['comments'])
+        context['comments'] = json.dumps(comments)
 
         return context
 
@@ -151,7 +154,7 @@ class ProfileView(generic.base.TemplateView):
         user_uuid = self.request.user.author.uuid
 
         if author_uuid == user_uuid:
-            context['posts'] = author.post_set.all()
+            context['posts'] = author.post_set.all().order_by('-published')
         else:
             context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
             context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
@@ -184,6 +187,11 @@ class AddPostView(generic.CreateView):
     model = Post
     form_class = PostCreationForm
     template_name = 'bettersocial/postapost.html'
+
+    def get_success_url(self):
+        if 'done' in self.request.POST:
+            url = reverse_lazy('bettersocial:index')
+        return url
 
     # Changes require in the future
     # The form itself has error message for the user if he / she does it incorrectly.
@@ -457,3 +465,19 @@ class SharePostActionView(generic.View):
 
         shared_post.save()
         return HttpResponseRedirect(reverse('bettersocial:article_details', args = (shared_post.uuid,)))
+
+@method_decorator(login_required, name = 'dispatch')
+class EditProfileView(generic.UpdateView):
+    template_name = 'bettersocial/edit_profile.html'
+    form_class = EditProfileForm
+    success_url = reverse_lazy('bettersocial:index')
+    
+    def get_object(self):
+        return self.request.user
+
+@method_decorator(login_required, name = 'dispatch')
+class PasswordsChangeView(SuccessMessageMixin, PasswordChangeView):
+    template_name = 'bettersocial/change_password.html'
+    form_class = PasswordChangeForm
+    success_url = reverse_lazy('bettersocial:index')
+    success_message = "Password changed was successful"

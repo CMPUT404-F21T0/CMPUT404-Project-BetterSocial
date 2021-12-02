@@ -2,12 +2,15 @@ import base64
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.forms import ModelForm, ImageField
+from django.contrib.auth.forms import UserChangeForm
+from django.contrib.auth.models import User
+from django import forms
 
 from .models import Comment, Post, ContentType
 
 
 class PostCreationForm(ModelForm):
-    image = ImageField()
+    image = ImageField(required=False)
 
     def save(self, commit = True):
         instance: Post = super().save(commit)
@@ -20,7 +23,6 @@ class PostCreationForm(ModelForm):
 
     class Meta:
         model = Post
-
         # More fields can be added
         fields = [
             'title',
@@ -33,7 +35,6 @@ class PostCreationForm(ModelForm):
             'recipient_uuid'
         ]
 
-
 class CommentCreationForm(ModelForm):
     class Meta:
         model = Comment
@@ -42,3 +43,17 @@ class CommentCreationForm(ModelForm):
         fields = [
             'comment'
         ]
+
+class EditProfileForm(UserChangeForm):
+    class Meta:
+        model = User
+        fields = ['username',
+                  'first_name', 
+                  'last_name', 
+                  'email', 
+                  'password'] 
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].help_text = ""
+        self.fields['password'].help_text = '<a style="color:red" href=\"../password/\">Click this to change password</a> '
