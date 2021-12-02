@@ -145,11 +145,13 @@ class ProfileView(generic.base.TemplateView):
         context = super(ProfileView, self).get_context_data(**kwargs)
         # author is the owner of the page we're looking at
         # user is the logged in user
-        author_uuid = self.kwargs['uuid']
-        author = Author.objects.filter(uuid = author_uuid).prefetch_related('post_set').get()
-        context['author'] = author
-        user_uuid = self.request.user.author.uuid
+        author_uuid = self.kwargs['uuimodd']
+        
+        context['author'] = self._find_author(context, **kwargs)
 
+        # self uuid, what is logged in as
+        user_uuid = self.request.user.author.uuid
+        # Get follow button actions
         if author_uuid == user_uuid:
             context['posts'] = author.post_set.all()
         else:
@@ -164,6 +166,28 @@ class ProfileView(generic.base.TemplateView):
 
         return context
 
+    def _find_author(self, context, **kwargs):
+        '''
+        Returns the JSON of the author if found
+        '''
+        author_qs = Author.objects.filter(uuid = self.kwargs['uuimodd'])
+        if author_qs.exists():
+            return AuthorSerializer(author_qs.get(), context = {'request': self.request}).data
+
+
+        # Otherwise, get remotely
+        node = Node.objects.filter(host__contains = self.request.GET['host']).get()
+        url = (yarl.URL(node.host) / 'author' / self.kwargs['uuimodd'] / '').human_repr()
+        response = requests.get(
+            url,
+            headers = { 'Accept': 'application/json' },
+            auth = HTTPBasicAuth(node.node_username, node.node_password),
+        )
+
+        if response.ok:
+            print(response.content)
+            author_info = json.loads(response.data)
+            Author(uuid=author_info['id'], github_url=author_info['github'], )
 
 # CODE REFERENCED: https://stackoverflow.com/questions/54187625/django-on-button-click-call-function-view
 @method_decorator(login_required, name = 'dispatch')
