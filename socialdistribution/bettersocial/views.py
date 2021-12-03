@@ -4,7 +4,6 @@ import requests
 import yarl
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
 from django.http import HttpResponseNotFound, HttpRequest, HttpResponseBadRequest
 from django.http.response import HttpResponseRedirect
@@ -284,8 +283,7 @@ class InboxView(generic.ListView):
 
     def get_queryset(self):
         """Return all inbox items."""
-        content_type = DjangoContentType.objects.get_for_model(model = Follower)
-        return InboxItem.objects.filter(Q(dj_content_type = content_type))
+        return InboxItem.objects.filter(author = self.request.user.author)
 
 
 @method_decorator(login_required, name = 'dispatch')
