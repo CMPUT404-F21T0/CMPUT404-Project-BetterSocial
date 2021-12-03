@@ -3,6 +3,7 @@ from uuid import UUID
 
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.http.response import HttpResponseServerError
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -11,10 +12,8 @@ from api import pagination
 from api import serializers
 from api.helpers import uuid_helpers
 from bettersocial import models
-from bettersocial.models import Post, InboxItem, Node
-from socialdistribution.api.serializers import AuthorSerializer
-from socialdistribution.bettersocial.models import Author, Follower
-
+from bettersocial.models import Post, InboxItem, Node, Author, Follower
+from socialdistribution.bettersocial.models import UUIDRemoteCache
 
 # -- API SPEC -- #
 
@@ -42,8 +41,11 @@ class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
 
 
 class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
-    queryset = models.Follower.objects.all()
-    serializer_class = serializers.AuthorSerializer
+    serializer_class = serializers.FollowerSerializer
+
+    def get_queryset(self):
+        author = models.Author.objects.filter(uuid = self.kwargs['author_pk']).get()
+        return models.Follower.objects.filter(author = author).all()
     
     def retrieve(self, request, *args, **kwargs):
         '''
@@ -51,9 +53,28 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         
         Checks if the provided foreign_uuid is a follower of the user
         '''
+        response = super().retrieve(request, *args, **kwargs)
+        followers = self.get_queryset()
         foreign_uuid = kwargs['pk']
-        follower = Follower.objects.filter(follower_uuid=foreign_uuid).exists()
-        return Response({'is_follower': str(follower)})
+        follower_qs = followers.filter(follower_uuid=foreign_uuid)
+        if follower_qs.exists():
+            # get author serialize
+            author_uuid = self.kwargs['author_pk']
+            author_qs = Author.objects.filter(uuid = author_uuid)
+            if author_qs.exists():
+                author = author_qs.get()
+                response.data = serializers.AuthorSerializer(author, context = { 'request': request }).data
+            else:
+                # remote author, GET info
+                remote_node_qs = UUIDRemoteCache.objects.filter(uuid=author_uuid)
+                if remote_node_qs.exists():
+                    # TODO: GET it and serialize it
+                    pass
+                else:
+                    # 
+                    return HttpResponseServerError({'message': 'Follower exists locally but author cannot be found'})
+        return response
+
 
     
     def list(self, request, *args, **kwargs):
@@ -62,18 +83,21 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         
         Gets list of authors who are the author_uuid's followers
         '''
-        # response = super().list(request, *args, **kwargs)
-
-        response = {'type': 'followers'}
+        response = super().list(request, *args, **kwargs)
+        response['type'] = 'followers'
         items = list()
 
-        author = Author.objects.filter(uuid = request.user.author.uuid).get()
-        followers = Follower.objects.filter(author=author)
+        followers = self.get_queryset()
         for follower in followers:
+            follower_author = Author.objects.filter(uuid = follower.follower_uuid)
             
-            items.append(AuthorSerializer())
+            if follower_author.exists():
+                items.append(serializers.AuthorSerializer(follower_author.get(),  context = { 'request': request }).data)
 
-        return response
+            # TODO: add functionality for getting remote followers
+
+        response['items'] = items
+        return Response(response)
 
 
     def update(self, request, *args, **kwargs):
@@ -82,10 +106,20 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
 
         Adds a follower (must be authenticated)
         '''
+        if not isinstance(request.user, User):
+            raise PermissionDenied({ 'message': "You must be authenticated as a user to get inbox items!" })
+
+        if request.user.author.uuid != UUID(self.kwargs['author_pk']):
+            raise PermissionDenied({ 'message': "You cannot get the inbox items of another user!" })
+
         author = Author.objects.filter(uuid = kwargs['author_pk']).get()
         foreign_uuid = kwargs['pk']
-        Follower(author = author, follower_uuid = foreign_uuid)
-        return Response()
+
+        if not Follower.objects.filter(author = author, follower_uuid = foreign_uuid):
+            Follower(author = author, follower_uuid = foreign_uuid)
+            return Response()
+        else:
+            return 
 
     def destroy(self, request, *args, **kwargs):
         '''
