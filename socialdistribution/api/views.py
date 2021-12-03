@@ -13,7 +13,6 @@ from api import serializers
 from api.helpers import uuid_helpers
 from bettersocial import models
 from bettersocial.models import Post, InboxItem, Node, Author, Follower
-from socialdistribution.bettersocial.models import UUIDRemoteCache
 
 # -- API SPEC -- #
 
@@ -66,9 +65,9 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
                 response.data = serializers.AuthorSerializer(author, context = { 'request': request }).data
             else:
                 # remote author, GET info
-                remote_node_qs = UUIDRemoteCache.objects.filter(uuid=author_uuid)
+                remote_node_qs = models.UUIDRemoteCache.objects.filter(uuid=author_uuid)
                 if remote_node_qs.exists():
-                    # TODO: GET it and serialize it
+                    # TODO: GET it and set it to response.data
                     pass
                 else:
                     # 
