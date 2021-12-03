@@ -65,14 +65,15 @@
 
         <div id="github-activity" style="border: 1px solid black" hidden>
         </div>
-        <h1> My Post Activity Stream ...</h1>
         <br>
-
-        {% for post in posts %}
-            {% if user.author.uuid == author.uuid %}
-                {% include 'bettersocial/post-preview.html' %}
-            {% endif %}
-        {% endfor %}
+        {% if user.author.uuid == author.uuid %}
+        <h1> My Post Activity Stream ...</h1>
+            {% for post in posts %}
+                {% if user.author.uuid == author.uuid %}
+                    {% include 'bettersocial/post-preview.html' %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 
     </div>
 {% endblock %}
