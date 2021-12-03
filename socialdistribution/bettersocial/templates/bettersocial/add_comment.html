@@ -1,19 +1,26 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
-    <h1>Comment on a Post</h1>
-
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/edit_profile.css' %}">
+<h2 style="margin-left: 100px;">Comment on a Post</h2>
+<div class="container">
     <form method="POST">
         {% csrf_token %}
         <!-- Fields can be expanded {{ form.field.value|default_if_none:"" }}-->
-        <table>
-            <tr>
-                <td>{{ form.comment.label_tag }}</td>
-                <td>{{ form.comment }}</td>
-            </tr>
-        </table>
 
-        </br></br>
-        <button>Add Comment</button>
+        <div class="row">
+            <div class="size-25">
+                {{ form.comment.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.comment }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="size-25">
+                <button>Add Comment</button>
+            </div>
+        </div>
     </form>
-
+</div>
 {% endblock %}

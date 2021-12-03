@@ -68,6 +68,7 @@
         <br>
         {% if user.author.uuid == author.uuid %}
         <h1> My Post Activity Stream ...</h1>
+        <br>
             {% for post in posts %}
                 {% if user.author.uuid == author.uuid %}
                     {% include 'bettersocial/post-preview.html' %}

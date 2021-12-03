@@ -3,13 +3,60 @@
 {% load static %}
 <!-- Style Sheet and References -->
 <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/edit_profile.css' %}">
-
-<div class = "form-group">
+<h2 style="margin-left: 100px;">Update Account</h2>
+<div class = "container">
     <form method = "POST">
         {% csrf_token %} 
-        <h2>Update Account</h2>
-        {{ form.as_p }}
-        <button class = "btn btn-secondary"> Update Profile </button>
+        <div class="row">
+            <div class="size-25">
+                {{ form.username.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.username }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.first_name.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.first_name }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.last_name.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.last_name }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.email.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.email }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="size-25">
+                {{ form.password.label_tag }}
+            </div>
+            <div class="size-75">
+                {{ form.password.help_text | safe }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="size-25">
+                <button class = "btn btn-secondary"> Update Profile </button>
+            </form>
+            </div>
+        </div>
     </form>
 </div>
 {% endblock %}

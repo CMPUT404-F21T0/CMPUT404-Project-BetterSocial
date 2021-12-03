@@ -1,5 +1,6 @@
 .container {
-    
+    margin-right: 100px;
+    margin-left: 100px;
     padding: 20px;
     border-radius: 5px;
     background-color: #f2f2f2;
@@ -8,11 +9,25 @@
 .size-25 {
     width: 25%;
     float: left;
-    margin-top: 6px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .size-75 {
     width: 75%;
     float: left;
-    margin-top: 6px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
+
+.block {
+    display: block;
+    width: 100%;
+    border: none;
+    background-color: #585858;
+    color: white;
+    padding: 14px 28px;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+  }

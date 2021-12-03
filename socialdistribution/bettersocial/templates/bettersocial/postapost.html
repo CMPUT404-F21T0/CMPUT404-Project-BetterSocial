@@ -1,12 +1,12 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
-    {% load static %}
+{% load static %}
 
     <!-- Style Sheet and References -->
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/postapost.css' %}">
     <script type="text/javascript" src="{% static "bettersocial/post.js" %}"></script>
 
-    <h1>Post a Post</h1>
+    <h1 style="margin-left: 100px;">Post a Post</h1>
 
     <br>
 
@@ -100,7 +100,7 @@
             </div>
 
             <div class="row">
-                <input type="submit" class="button" value="Post"/>
+                <input type="submit" class="block" value="Post"/>
             </div>
         </form>
     </div>
