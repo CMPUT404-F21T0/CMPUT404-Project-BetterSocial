@@ -44,7 +44,7 @@ class ArticleDetailView(generic.TemplateView):
 
         if post_qs.exists():
             post = post_qs.get()
-            comments = post.comments.order_by('-published')
+            comments = post.comments.order_by('-published').all()
 
             return PostSerializer(post, context = { 'request': self.request }).data, \
                    CommentSerializer(comments, context = { 'request': self.request }, many = True).data
@@ -77,7 +77,7 @@ class ArticleDetailView(generic.TemplateView):
                     comments_response.raise_for_status()
 
                     if post_response.ok:
-                        return post_response.json(), comments_response.json() if comments_response.ok else []
+                        return post_response.json(), comments_response.json()['comments'] if comments_response.ok else []
 
                 else:
                     return item.inbox_object
@@ -292,8 +292,7 @@ class InboxView(generic.ListView):
 
     def get_queryset(self):
         """Return all inbox items."""
-        content_type = DjangoContentType.objects.get_for_model(model = Follower)
-        return InboxItem.objects.filter(Q(dj_content_type = content_type))
+        return InboxItem.objects.filter(author = self.request.user.author)
 
 
 @method_decorator(login_required, name = 'dispatch')
