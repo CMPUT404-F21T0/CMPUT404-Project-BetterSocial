@@ -1,12 +1,13 @@
 import base64
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.forms import ModelForm, ImageField
+from django.forms import ModelForm, ImageField, widgets
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import User
 from django import forms
+from django.forms.forms import Form
 
-from .models import Comment, Post, ContentType
+from .models import Author, Comment, Post, ContentType
 
 
 class PostCreationForm(ModelForm):
@@ -34,6 +35,17 @@ class PostCreationForm(ModelForm):
             'unlisted',
             'recipient_uuid'
         ]
+        # TODO : Probably need to include remote authors in the select options at some point
+        ALL_LOCAL_AUTHORS = Author.objects.all()
+        AUTHOR_CHOICES = [((""),("-----"))]
+        for x in ALL_LOCAL_AUTHORS:
+            AUTHOR_CHOICES.append((x.uuid, x.user))
+
+        widgets = {
+            'recipient_uuid': forms.Select(choices= AUTHOR_CHOICES, attrs={'onChange': "validate()"}),
+            'visibility': forms.Select(attrs={'onChange': "validate()"}),
+            'unlisted': forms.CheckboxInput(attrs={'onChange': "validate()"}),
+        }
 
 class CommentCreationForm(ModelForm):
     class Meta:
