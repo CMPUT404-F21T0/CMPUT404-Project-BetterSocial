@@ -41,7 +41,7 @@ class ArticleDetailView(generic.TemplateView):
 
         if post_qs.exists():
             post = post_qs.get()
-            comments = post.comments.order_by('-published')
+            comments = post.comments.order_by('-published').all()
 
             return PostSerializer(post, context = { 'request': self.request }).data, \
                    CommentSerializer(comments, context = { 'request': self.request }, many = True).data
@@ -74,7 +74,7 @@ class ArticleDetailView(generic.TemplateView):
                     comments_response.raise_for_status()
 
                     if post_response.ok:
-                        return post_response.json(), comments_response.json() if comments_response.ok else []
+                        return post_response.json(), comments_response.json()['comments'] if comments_response.ok else []
 
                 else:
                     return item.inbox_object
@@ -113,7 +113,7 @@ class ArticleDetailView(generic.TemplateView):
         # context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
 
         context['post'] = json.dumps(post)
-        context['comments'] = json.dumps(comments['comments'])
+        context['comments'] = json.dumps(comments)
 
         return context
 
