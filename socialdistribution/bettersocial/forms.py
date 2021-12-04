@@ -35,14 +35,17 @@ class PostCreationForm(ModelForm):
             'unlisted',
             'recipient_uuid'
         ]
+        
+        '''
         # TODO : Probably need to include remote authors in the select options at some point
         ALL_LOCAL_AUTHORS = Author.objects.all()
         AUTHOR_CHOICES = [((""),("-----"))]
         for x in ALL_LOCAL_AUTHORS:
             AUTHOR_CHOICES.append((x.uuid, x.user))
+        '''
 
         widgets = {
-            'recipient_uuid': forms.Select(choices= AUTHOR_CHOICES, attrs={'onChange': "validate()"}),
+            'recipient_uuid': forms.TextInput(attrs={'onChange': "validate()"}),
             'visibility': forms.Select(attrs={'onChange': "validate()"}),
             'unlisted': forms.CheckboxInput(attrs={'onChange': "validate()"}),
         }
