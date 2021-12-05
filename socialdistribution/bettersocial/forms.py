@@ -1,17 +1,13 @@
 import base64
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.forms import ModelForm, ImageField, widgets
-from django.contrib.auth.forms import UserChangeForm
-from django.contrib.auth.models import User
-from django import forms
-from django.forms.forms import Form
+from django.forms import ModelForm, ImageField
 
-from .models import Author, Comment, Post, ContentType
+from .models import Comment, Post, ContentType
 
 
 class PostCreationForm(ModelForm):
-    image = ImageField(required=False)
+    image = ImageField()
 
     def save(self, commit = True):
         instance: Post = super().save(commit)
@@ -24,6 +20,7 @@ class PostCreationForm(ModelForm):
 
     class Meta:
         model = Post
+
         # More fields can be added
         fields = [
             'title',
@@ -35,20 +32,7 @@ class PostCreationForm(ModelForm):
             'unlisted',
             'recipient_uuid'
         ]
-        
-        '''
-        # TODO : Probably need to include remote authors in the select options at some point
-        ALL_LOCAL_AUTHORS = Author.objects.all()
-        AUTHOR_CHOICES = [((""),("-----"))]
-        for x in ALL_LOCAL_AUTHORS:
-            AUTHOR_CHOICES.append((x.uuid, x.user))
-        '''
 
-        widgets = {
-            'recipient_uuid': forms.TextInput(attrs={'onChange': "validate()"}),
-            'visibility': forms.Select(attrs={'onChange': "validate()"}),
-            'unlisted': forms.CheckboxInput(attrs={'onChange': "validate()"}),
-        }
 
 class CommentCreationForm(ModelForm):
     class Meta:
@@ -58,17 +42,3 @@ class CommentCreationForm(ModelForm):
         fields = [
             'comment'
         ]
-
-class EditProfileForm(UserChangeForm):
-    class Meta:
-        model = User
-        fields = ['username',
-                  'first_name', 
-                  'last_name', 
-                  'email', 
-                  'password'] 
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['username'].help_text = ""
-        self.fields['password'].help_text = '<a style="color:red" href=\"../password/\">Click this to change password</a> '
