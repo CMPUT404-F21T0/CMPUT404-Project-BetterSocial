@@ -49,7 +49,6 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
     serializer_class = serializers.AuthorSerializer
 
     def get_follower(self, follower_uuid, context):
-
         author = models.Author.objects.filter(uuid = self.kwargs['author_pk']).get()
         followers = models.Follower.objects.filter(author = author).all()
 
@@ -107,10 +106,11 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         Gets list of authors who are the author_uuid's followers
         """
         response = super().list(request, *args, **kwargs)
-        response['type'] = 'followers'
+        response.data.append({'type': 'followers'})
         items = list()
 
-        followers = self.get_queryset()
+        author = Author.objects.filter(uuid = kwargs['author_pk']).get()
+        followers = Follower.objects.filter(author = author).all()
         for follower in followers:
             # follower_author = Author.objects.filter(uuid = follower.follower_uuid)
             follower_uuid = follower.follower_uuid
@@ -121,8 +121,9 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
             else:
                 return HttpResponseServerError({ 'message': f'Follower {follower_uuid} exists locally but author cannot be found' })
 
-        response['items'] = items
-        return Response(response)
+        response.data.append({'items': items})
+
+        return response
 
     def update(self, request, *args, **kwargs):
         '''
@@ -153,7 +154,9 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         Remove a follower
         '''
         foreign_uuid = kwargs['pk']
-        follower_qs = self.get_queryset().filter(follower_uuid = foreign_uuid)
+        author = Author.objects.filter(uuid = kwargs['author_pk']).get()
+        followers_qs = Follower.objects.filter(author = author)
+        follower_qs = followers_qs.filter(follower_uuid = foreign_uuid)
         if follower_qs.exists():
             Follower.objects.filter(follower_uuid = foreign_uuid).delete()
             return Response()
