@@ -5,10 +5,10 @@ import requests
 import yarl
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http.response import HttpResponseBadRequest, HttpResponseServerError
+# from django.http.response import HttpResponseBadRequest, HttpResponseServerError
 from requests.auth import HTTPBasicAuth
 from rest_framework import viewsets, mixins, permissions
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from yarl import URL
 
@@ -27,11 +27,11 @@ class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
     pagination_class = pagination.CustomPageNumberPagination
 
     def list(self, request, *args, **kwargs):
-        '''
+        """
         GET {host_url}/authors
 
         Gets all authors on the server
-        '''
+        """
         response = super().list(request, *args, **kwargs)
 
         root_json = OrderedDict()
@@ -95,7 +95,7 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         if follower is not None:
             response.data = follower
         else:
-            return HttpResponseServerError({ 'message': 'Follower exists locally but author cannot be found' })
+            raise ValidationError({ 'message': 'Follower exists locally but author cannot be found' })
 
         return response
 
@@ -106,8 +106,14 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         Gets list of authors who are the author_uuid's followers
         """
         response = super().list(request, *args, **kwargs)
-        response.data.append({'type': 'followers'})
-        items = list()
+
+        root_json = OrderedDict()
+
+        root_json['type'] = 'followers'
+
+        response.data = root_json
+
+        items = []
 
         author = Author.objects.filter(uuid = kwargs['author_pk']).get()
         followers = Follower.objects.filter(author = author).all()
@@ -121,16 +127,16 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
             else:
                 return HttpResponseServerError({ 'message': f'Follower {follower_uuid} exists locally but author cannot be found' })
 
-        response.data.append({'items': items})
+        root_json['items'] = items
 
         return response
 
     def update(self, request, *args, **kwargs):
-        '''
+        """
         PUT {host_url}/author/{author_uuid}/followers/{foreign_uuid}
 
         Adds a follower (must be authenticated)
-        '''
+        """
         if not isinstance(request.user, User):
             raise PermissionDenied({ 'message': "You must be authenticated as a user to get inbox items!" })
 
@@ -145,14 +151,14 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
             Follower(author = author, follower_uuid = foreign_uuid)
             return response
         else:
-            return HttpResponseServerError({ 'message': 'Author is already a follower' })
+            raise ValidationError({ 'message': 'Author is already a follower' })
 
     def destroy(self, request, *args, **kwargs):
-        '''
+        """
         DELETE {host_url}/author/{author_uuid}/followers/{foreign_uuid}
 
         Remove a follower
-        '''
+        """
         foreign_uuid = kwargs['pk']
         author = Author.objects.filter(uuid = kwargs['author_pk']).get()
         followers_qs = Follower.objects.filter(author = author)
@@ -161,7 +167,7 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
             Follower.objects.filter(follower_uuid = foreign_uuid).delete()
             return Response()
         else:
-            return HttpResponseBadRequest({ 'message': 'Follower does not exist' })
+            raise ValidationError({ 'message': 'Follower does not exist' })
 
 
 class PostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
@@ -179,11 +185,11 @@ class CommentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
         return models.Comment.objects.filter(post__uuid = self.kwargs['post_pk']).order_by('-published').all()
 
     def list(self, request, *args, **kwargs):
-        '''
+        """
         GET {host_url}/author/{author_uuid}/posts/{post_uuid}/comments
 
         Gets comments of the given post
-        '''
+        """
         response = super().list(request, *args, **kwargs)
 
         root_json = OrderedDict()
@@ -213,11 +219,11 @@ class InboxItemViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Cr
         return context
 
     def create(self, request, *args, **kwargs):
-        '''
+        """
         POST {host_url}/author/{author_uuid}/inbox
 
         Sends a post to the author's inbox
-        '''
+        """
         # Modify the request via the adapter method
         if isinstance(request.user, Node):
             request = request.user.adapter.post_inbox_item(request, *args, **kwargs)
@@ -225,11 +231,11 @@ class InboxItemViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Cr
         return super().create(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
-        '''
+        """
         GET {host_url}/author/{author_uuid}/inbox
 
         Gets all inbox items sent to author (must be authenticated)
-        '''
+        """
         if not isinstance(request.user, User):
             raise PermissionDenied({ 'message': "You must be authenticated as a user to get inbox items!" })
 
@@ -260,11 +266,11 @@ class AllRemotePostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = serializers.PostSerializer
 
     def list(self, request, *args, **kwargs):
-        '''
+        """
         GET {host_url}/remote-posts
 
         Gets all remote posts viewable to current author (must be authenticated)
-        '''
+        """
         if not isinstance(request.user, User):
             raise PermissionDenied({ 'message': "You must be authenticated as a user to get post items this way!" })
 
@@ -310,11 +316,11 @@ class AllPostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = serializers.PostSerializer
 
     def list(self, request, *args, **kwargs):
-        '''
+        """
         GET {host_url}/posts
 
         Gets all local posts viewable to current author (must be authenticated)
-        '''
+        """
         if not isinstance(request.user, User):
             raise PermissionDenied({ 'message': "You must be authenticated as a user to get post items this way!" })
 
