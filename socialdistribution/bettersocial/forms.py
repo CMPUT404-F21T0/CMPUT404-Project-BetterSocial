@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django import forms
 from django.forms.forms import Form
 
-from .models import Author, Comment, Post, ContentType
+from .models import Comment, Post, ContentType
 
 
 class PostCreationForm(ModelForm):
@@ -24,6 +24,7 @@ class PostCreationForm(ModelForm):
 
     class Meta:
         model = Post
+
         # More fields can be added
         fields = [
             'title',
@@ -35,7 +36,7 @@ class PostCreationForm(ModelForm):
             'unlisted',
             'recipient_uuid'
         ]
-        
+
         '''
         # TODO : Probably need to include remote authors in the select options at some point
         ALL_LOCAL_AUTHORS = Author.objects.all()
@@ -67,7 +68,7 @@ class EditProfileForm(UserChangeForm):
                   'last_name', 
                   'email', 
                   'password'] 
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['username'].help_text = ""
