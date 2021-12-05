@@ -3,7 +3,7 @@ from uuid import UUID
 
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http.response import HttpResponseServerError
+from django.http.response import HttpResponseBadRequest, HttpResponseServerError
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -98,7 +98,6 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         response['items'] = items
         return Response(response)
 
-
     def update(self, request, *args, **kwargs):
         '''
         PUT {host_url}/author/{author_uuid}/followers/{foreign_uuid}
@@ -111,14 +110,15 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         if request.user.author.uuid != UUID(self.kwargs['author_pk']):
             raise PermissionDenied({ 'message': "You cannot get the inbox items of another user!" })
 
+        response = super().update(request, *args, **kwargs)
         author = Author.objects.filter(uuid = kwargs['author_pk']).get()
         foreign_uuid = kwargs['pk']
 
         if not Follower.objects.filter(author = author, follower_uuid = foreign_uuid):
             Follower(author = author, follower_uuid = foreign_uuid)
-            return Response()
+            return response
         else:
-            return 
+            return HttpResponseServerError()
 
     def destroy(self, request, *args, **kwargs):
         '''
@@ -127,8 +127,12 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         Remove a follower
         '''
         foreign_uuid = kwargs['pk']
-        Follower.objects.filter(follower_uuid=foreign_uuid).delete()
-        return Response()
+        follower_qs = self.get_queryset().filter(follower_uuid=foreign_uuid)
+        if follower_qs.exists():
+            Follower.objects.filter(follower_uuid=foreign_uuid).delete()
+            return Response()
+        else:
+            return HttpResponseBadRequest({'message': 'Follower does not exist'})
 
 
 class PostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
