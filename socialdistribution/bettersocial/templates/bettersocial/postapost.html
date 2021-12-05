@@ -1,17 +1,16 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
-{% load static %}
+    {% load static %}
 
     <!-- Style Sheet and References -->
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/postapost.css' %}">
-    <script type="text/javascript" src="{% static "bettersocial/post.js" %}"></script>
 
-    <h1 style="margin-left: 100px;">Post a Post</h1>
+    <h1>Post a Post</h1>
 
     <br>
 
     <!-- Temporary HTML / CSS -->
-    <div class="container" onload="javascript:validate()">
+    <div class="container">
         <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row">
@@ -22,7 +21,7 @@
                     {{ form.title }}
                 </div>
             </div>
-            
+
             <div class="row">
                 <div class="size-25">
                     {{ form.content_type.label_tag }}
@@ -42,7 +41,6 @@
             </div>
 
             <div class="row">
-                {{ form.media }}
                 <div class="size-25">
                     {{ form.content.label_tag }}
                 </div>
@@ -62,13 +60,10 @@
 
             <div class="row">
                 <div class="size-25">
-                    {{ form.categories.label_tag }}
+                    {{ form.categories.label_tag }} - In the form ["example", "xxx"]
                 </div>
                 <div class="size-75">
                     {{ form.categories }}
-                    
-                    <button onclick="enterTagFunction()" type="button">Enter Tag</button>
-
                 </div>
             </div>
 
@@ -83,7 +78,7 @@
 
             <div class="row">
                 <div class="size-25">
-                    {{ form.recipient_uuid.label_tag }}
+                    {{ form.recipient_uuid.label_tag }} - Only if Private to Author (DM)
                 </div>
                 <div class="size-75">
                     {{ form.recipient_uuid }}
@@ -100,7 +95,7 @@
             </div>
 
             <div class="row">
-                <input type="submit" class="block" value="Post"/>
+                <input type="submit" class="button" value="Post"/>
             </div>
         </form>
     </div>
