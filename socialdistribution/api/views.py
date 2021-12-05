@@ -2,19 +2,18 @@ from collections import OrderedDict
 from uuid import UUID
 
 import requests
-import yarl
 from django.contrib.auth.models import User
 from django.db.models import Q
-# from django.http.response import HttpResponseBadRequest, HttpResponseServerError
+from django.http.response import HttpResponseServerError
 from requests.auth import HTTPBasicAuth
 from rest_framework import viewsets, mixins, permissions
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound
 from rest_framework.response import Response
 from yarl import URL
 
 from api import pagination
 from api import serializers
-from api.helpers import uuid_helpers
+from api.helpers import uuid_helpers, remote_helpers
 from bettersocial import models
 from bettersocial.models import Post, InboxItem, Node, Author, Follower
 
@@ -60,25 +59,10 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
                 author = author_qs.get()
                 return serializers.AuthorSerializer(author, context = context).data
             else:
-                # remote author, GET info
-                remote_node_qs = models.UUIDRemoteCache.objects.filter(uuid = follower_uuid)
-                if remote_node_qs.exists():
-                    # TODO: GET it and set it to response.data
-
-                    node = remote_node_qs.get()
-                    url = (yarl.URL(node.host) / node.prefix / 'author' / follower_uuid / '').human_repr()
-
-                    post_response = requests.get(
-                        url,
-                        headers = { 'Accept': 'application/json' },
-                    )
-
-                    post_response.raise_for_status()
-
-                    if post_response.ok:
-                        return serializers.AuthorSerializer(post_response.json(), context = context).data
-
-        return None
+                # Already serialized to JSON. Will return None when not found
+                return remote_helpers.find_remote_author(follower_uuid)
+        else:
+            raise NotFound({ 'message': f'{UUID(follower_uuid)} is not following {author.display_name} ({author.uuid})' })
 
     def retrieve(self, request, *args, **kwargs):
         """
