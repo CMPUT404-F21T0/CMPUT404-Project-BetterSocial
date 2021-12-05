@@ -2,6 +2,7 @@ from collections import OrderedDict
 from uuid import UUID
 
 import requests
+import yarl
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http.response import HttpResponseBadRequest, HttpResponseServerError
@@ -10,13 +11,13 @@ from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from yarl import URL
-import yarl
 
 from api import pagination
 from api import serializers
 from api.helpers import uuid_helpers
 from bettersocial import models
 from bettersocial.models import Post, InboxItem, Node, Author, Follower
+
 
 # -- API SPEC -- #
 
@@ -44,30 +45,29 @@ class AuthorViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
 
 
 class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
-    serializer_class = serializers.FollowerSerializer
-
-    def get_queryset(self):
-        author = models.Author.objects.filter(uuid = self.kwargs['author_pk']).get()
-        return models.Follower.objects.filter(author = author).all()
+    queryset = Follower.objects.none()
+    serializer_class = serializers.AuthorSerializer
 
     def get_follower(self, follower_uuid, context):
-        followers = self.get_queryset()
-        follower_qs = followers.filter(follower_uuid=follower_uuid)
+
+        author = models.Author.objects.filter(uuid = self.kwargs['author_pk']).get()
+        followers = models.Follower.objects.filter(author = author).all()
+
+        follower_qs = followers.filter(follower_uuid = follower_uuid)
         if follower_qs.exists():
             # get author serialize
-            author_uuid = self.kwargs['author_pk']
-            author_qs = Author.objects.filter(uuid = author_uuid)
+            author_qs = Author.objects.filter(uuid = follower_uuid)
             if author_qs.exists():
                 author = author_qs.get()
                 return serializers.AuthorSerializer(author, context = context).data
             else:
                 # remote author, GET info
-                remote_node_qs = models.UUIDRemoteCache.objects.filter(uuid=author_uuid)
+                remote_node_qs = models.UUIDRemoteCache.objects.filter(uuid = follower_uuid)
                 if remote_node_qs.exists():
                     # TODO: GET it and set it to response.data
 
                     node = remote_node_qs.get()
-                    url = (yarl.URL(node.host) / node.prefix /  'author' / author_uuid / '').human_repr()
+                    url = (yarl.URL(node.host) / node.prefix / 'author' / follower_uuid / '').human_repr()
 
                     post_response = requests.get(
                         url,
@@ -75,37 +75,37 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
                     )
 
                     post_response.raise_for_status()
-                    
+
                     if post_response.ok:
                         return serializers.AuthorSerializer(post_response.json(), context = context).data
 
         return None
 
     def retrieve(self, request, *args, **kwargs):
-        '''
+        """
         GET {host_url}/author/{author_uuid}/followers/{foreign_uuid}
-        
+
         Checks if the provided foreign_uuid is a follower of the user
-        '''
+        """
         response = Response()
         # response = super().retrieve(request, *args, **kwargs)
         foreign_uuid = kwargs['pk']
-        
-        follower = self.get_follower(foreign_uuid, {'request' : request})
+
+        follower = self.get_follower(foreign_uuid, { 'request': request })
 
         if follower is not None:
             response.data = follower
         else:
-            return HttpResponseServerError({'message': 'Follower exists locally but author cannot be found'})
-        
+            return HttpResponseServerError({ 'message': 'Follower exists locally but author cannot be found' })
+
         return response
-    
+
     def list(self, request, *args, **kwargs):
-        '''
+        """
         GET {host_url}/author/{author_uuid}/followers
-        
+
         Gets list of authors who are the author_uuid's followers
-        '''
+        """
         response = super().list(request, *args, **kwargs)
         response['type'] = 'followers'
         items = list()
@@ -114,12 +114,12 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         for follower in followers:
             # follower_author = Author.objects.filter(uuid = follower.follower_uuid)
             follower_uuid = follower.follower_uuid
-            follower_item = self.get_follower(follower_uuid, {'request' : request})
+            follower_item = self.get_follower(follower_uuid, { 'request': request })
 
             if follower_item is not None:
                 items.append(follower_item)
             else:
-                return HttpResponseServerError({'message': f'Follower {follower_uuid} exists locally but author cannot be found'})
+                return HttpResponseServerError({ 'message': f'Follower {follower_uuid} exists locally but author cannot be found' })
 
         response['items'] = items
         return Response(response)
@@ -144,7 +144,7 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
             Follower(author = author, follower_uuid = foreign_uuid)
             return response
         else:
-            return HttpResponseServerError({'message': 'Author is already a follower'})
+            return HttpResponseServerError({ 'message': 'Author is already a follower' })
 
     def destroy(self, request, *args, **kwargs):
         '''
@@ -153,12 +153,12 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
         Remove a follower
         '''
         foreign_uuid = kwargs['pk']
-        follower_qs = self.get_queryset().filter(follower_uuid=foreign_uuid)
+        follower_qs = self.get_queryset().filter(follower_uuid = foreign_uuid)
         if follower_qs.exists():
-            Follower.objects.filter(follower_uuid=foreign_uuid).delete()
+            Follower.objects.filter(follower_uuid = foreign_uuid).delete()
             return Response()
         else:
-            return HttpResponseBadRequest({'message': 'Follower does not exist'})
+            return HttpResponseBadRequest({ 'message': 'Follower does not exist' })
 
 
 class PostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
