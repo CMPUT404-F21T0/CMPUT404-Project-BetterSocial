@@ -10,6 +10,7 @@ from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from yarl import URL
+import yarl
 
 from api import pagination
 from api import serializers
@@ -48,36 +49,56 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
     def get_queryset(self):
         author = models.Author.objects.filter(uuid = self.kwargs['author_pk']).get()
         return models.Follower.objects.filter(author = author).all()
-    
-    def retrieve(self, request, *args, **kwargs):
-        '''
-        GET {host_url}/author/{author_uuid}/followers/{foreign_uuid}
-        
-        Checks if the provided foreign_uuid is a follower of the user
-        '''
-        response = super().retrieve(request, *args, **kwargs)
+
+    def get_follower(self, follower_uuid, context):
         followers = self.get_queryset()
-        foreign_uuid = kwargs['pk']
-        follower_qs = followers.filter(follower_uuid=foreign_uuid)
+        follower_qs = followers.filter(follower_uuid=follower_uuid)
         if follower_qs.exists():
             # get author serialize
             author_uuid = self.kwargs['author_pk']
             author_qs = Author.objects.filter(uuid = author_uuid)
             if author_qs.exists():
                 author = author_qs.get()
-                response.data = serializers.AuthorSerializer(author, context = { 'request': request }).data
+                return serializers.AuthorSerializer(author, context = context).data
             else:
                 # remote author, GET info
                 remote_node_qs = models.UUIDRemoteCache.objects.filter(uuid=author_uuid)
                 if remote_node_qs.exists():
                     # TODO: GET it and set it to response.data
-                    pass
-                else:
-                    # 
-                    return HttpResponseServerError({'message': 'Follower exists locally but author cannot be found'})
+
+                    node = remote_node_qs.get()
+                    url = (yarl.URL(node.host) / node.prefix /  'author' / author_uuid / '').human_repr()
+
+                    post_response = requests.get(
+                        url,
+                        headers = { 'Accept': 'application/json' },
+                    )
+
+                    post_response.raise_for_status()
+                    
+                    if post_response.ok:
+                        return serializers.AuthorSerializer(post_response.json(), context = context).data
+
+        return None
+
+    def retrieve(self, request, *args, **kwargs):
+        '''
+        GET {host_url}/author/{author_uuid}/followers/{foreign_uuid}
+        
+        Checks if the provided foreign_uuid is a follower of the user
+        '''
+        response = Response()
+        # response = super().retrieve(request, *args, **kwargs)
+        foreign_uuid = kwargs['pk']
+        
+        follower = self.get_follower(foreign_uuid, {'request' : request})
+
+        if follower is not None:
+            response.data = follower
+        else:
+            return HttpResponseServerError({'message': 'Follower exists locally but author cannot be found'})
+        
         return response
-
-
     
     def list(self, request, *args, **kwargs):
         '''
@@ -91,12 +112,14 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
 
         followers = self.get_queryset()
         for follower in followers:
-            follower_author = Author.objects.filter(uuid = follower.follower_uuid)
-            
-            if follower_author.exists():
-                items.append(serializers.AuthorSerializer(follower_author.get(),  context = { 'request': request }).data)
+            # follower_author = Author.objects.filter(uuid = follower.follower_uuid)
+            follower_uuid = follower.follower_uuid
+            follower_item = self.get_follower(follower_uuid, {'request' : request})
 
-            # TODO: add functionality for getting remote followers
+            if follower_item is not None:
+                items.append(follower_item)
+            else:
+                return HttpResponseServerError({'message': f'Follower {follower_uuid} exists locally but author cannot be found'})
 
         response['items'] = items
         return Response(response)
@@ -121,7 +144,7 @@ class FollowerViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins
             Follower(author = author, follower_uuid = foreign_uuid)
             return response
         else:
-            return HttpResponseServerError()
+            return HttpResponseServerError({'message': 'Author is already a follower'})
 
     def destroy(self, request, *args, **kwargs):
         '''
