@@ -22,4 +22,3 @@ uuid==1.30
 whitenoise==5.3.0
 yarl==1.7.2
 django-markdownx==3.0.1
-

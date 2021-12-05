@@ -18,8 +18,6 @@ urlpatterns = [
     path('article/edit/<buuid:pk>/', views.UpdatePostView.as_view(), name = 'edit_post'),
     path('profile/<buuid:uuid>', views.ProfileView.as_view(), name = 'profile'),
     path('profile/<buuid:uuid>/<str:action>', views.ProfileActionView.as_view(), name = 'profile_action'),
-    path('edit_profile/', views.EditProfileView.as_view(), name = 'edit_profile'),
-    path('password/', views.PasswordsChangeView.as_view()),
     path('inbox/', views.InboxView.as_view(), name = 'inbox'),
     path('friends/', views.FollowersView.as_view(), name = 'friends'),
     path('delete-following/', views.DeleteFollowingView.as_view(), name = 'delete_following'),
