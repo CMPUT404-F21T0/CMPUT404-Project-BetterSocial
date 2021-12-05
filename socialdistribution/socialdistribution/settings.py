@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'api',
     'django_extensions',
     'md.apps.MdConfig',
-    'ckeditor',
+    'markdownx',
 ]
 
 MIDDLEWARE = [
