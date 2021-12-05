@@ -1,12 +1,15 @@
 from collections import OrderedDict
 from uuid import UUID
 
+import requests
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http.response import HttpResponseBadRequest, HttpResponseServerError
+from requests.auth import HTTPBasicAuth
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from yarl import URL
 
 from api import pagination
 from api import serializers
@@ -245,6 +248,23 @@ class AllRemotePostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         queryset = InboxItem.objects.filter(author = request.user.author, inbox_object__iregex = '"type": "post"').all()
 
         for item in queryset:
+
+            if item.inbox_object['visibility'] == Post.Visibility.PUBLIC:
+
+                node = Node.objects.filter(host__contains = item.inbox_object['author']['host']).get()
+
+                response = requests.head(
+                    URL(item.inbox_object['url']).human_repr(),
+                    headers = { 'Accept': 'application/json' },
+                    auth = HTTPBasicAuth(node.node_username, node.node_password),
+                )
+
+                print(f'Inbox checking: {response.status_code} -- {response.request.url}')
+
+                # If the response to a public post comes back as 404 that means it was deleted, so the inbox item is invalid, so don't return it.
+                if response.status_code == 404:
+                    continue
+
             data.append(item.inbox_object)
 
         for post in data:

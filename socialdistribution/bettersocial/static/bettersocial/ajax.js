@@ -214,17 +214,17 @@ function getAllPosts(currentUserUUID) {
 
     const streamItems = document.getElementById('stream_items');
 
-    Promise.all([localPosts, remotePosts])
+    return Promise.all([localPosts, remotePosts])
         .then(responses => {
             return Promise.all(responses.map((response => response.json())));
         }).then(arrays => {
-        let fullList = [];
+            let fullList = [];
 
-        arrays.forEach((array) => {
-            array.forEach(post => fullList.push(post));
-        });
+            arrays.forEach((array) => {
+                array.forEach(post => fullList.push(post));
+            });
 
-        if (fullList.length < 1) {
+            if (fullList.length < 1) {
             return;
         }
 

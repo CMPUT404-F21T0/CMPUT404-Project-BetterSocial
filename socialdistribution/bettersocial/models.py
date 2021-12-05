@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db import models
+from ckeditor.fields import RichTextField
 
 from api import adapters
 from api.adapters import BaseAdapter
@@ -169,7 +170,7 @@ class Post(Likeable):
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
 
     title = models.CharField(max_length = 255)
-    content = models.TextField(null = True, blank = True)
+    content = RichTextField(null = True, blank = True)
     description = models.TextField(null = True, blank = True)
 
     # Validated as a JSON list of non-empty strings.
