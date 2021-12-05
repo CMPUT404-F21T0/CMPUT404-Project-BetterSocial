@@ -148,7 +148,7 @@ class ProfileView(generic.base.TemplateView):
         context = super(ProfileView, self).get_context_data(**kwargs)
         # author is the owner of the page we're looking at
         # user is the logged in user
-        author_uuid = self.kwargs['uuimodd']
+        author_uuid = self.kwargs['author_pk']
         
         context['author'] = self._find_author(context, **kwargs)
 
@@ -156,6 +156,7 @@ class ProfileView(generic.base.TemplateView):
         user_uuid = self.request.user.author.uuid
         # Get follow button actions
         if author_uuid == user_uuid:
+            author = Author.objects.filter(uuid = author_uuid).prefetch_related('post_set').get()
             context['posts'] = author.post_set.all().order_by('-published')
         else:
             context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
