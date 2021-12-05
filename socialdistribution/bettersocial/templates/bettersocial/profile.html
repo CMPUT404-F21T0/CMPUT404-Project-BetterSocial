@@ -5,7 +5,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/profile.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}">
     <script type="text/javascript" src="{% static "bettersocial/profile.js" %}"></script>
-
+    
     <div class="profile">
         <div class="profile-header">
             <div class="profile-pic">
@@ -32,7 +32,10 @@
                 <!-- <button>Friends</button> -->
                 <!-- TODO: connect edit profile button -->
                 {% if user.author.uuid == author.uuid %}
-                    <button>Edit Profile</button>
+                    <form action="{% url 'bettersocial:edit_profile' %}">
+                        {% csrf_token %}
+                        <button>Edit Profile</button>
+                    </form>
                     <!-- TODO: connect unfriend button -->
                 {% elif author_following_user and user_following_author %}
                     <form action="{% url 'bettersocial:profile_action' author.uuid 'unfollow' %}" method="post">
@@ -62,11 +65,16 @@
 
         <div id="github-activity" style="border: 1px solid black" hidden>
         </div>
-        {% for post in posts %}
-
-            {% include 'bettersocial/post-preview.html' %}
-
-        {% endfor %}
+        <br>
+        {% if user.author.uuid == author.uuid %}
+        <h1> My Post Activity Stream ...</h1>
+        <br>
+            {% for post in posts %}
+                {% if user.author.uuid == author.uuid %}
+                    {% include 'bettersocial/post-preview.html' %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 
     </div>
 {% endblock %}
