@@ -50,7 +50,13 @@ def find_remote_author(author_uuid: Union[str, UUID]) -> Optional[Dict]:
 
         # Found user, cache and return
         if response.status_code == 200:
-            return response.json()
+            shaped_json = cached_node.adapter.shape_author(cached_node, author_uuid, response)
+
+            # In the case that we have a 200 but it turns out that author was invalid
+            if not shaped_json:
+                return None
+
+            return shaped_json
 
         print(f'Could not find UUID "{author_uuid}" on {cached_node.host}\'s server! Perhaps the user was deleted?', file = stderr)
 
@@ -64,8 +70,15 @@ def find_remote_author(author_uuid: Union[str, UUID]) -> Optional[Dict]:
 
             # Found user, cache and return
             if response.status_code == 200:
+                shaped_json = node.adapter.shape_author(node, author_uuid, response)
+
+                # In the case that we have a 200 but it turns out that author was invalid
+                if not shaped_json:
+                    return None
+
                 cache_host_of_uuid(author_uuid, node)
-                return response.json()
+
+                return shaped_json
 
         print(f'Could not find UUID "{author_uuid}" on any remote server! Perhaps the user was deleted?', file = stderr)
         return None
@@ -126,6 +139,12 @@ def get_all_authors(node: Node) -> List[Dict]:
     print(response.request.url)
 
     if response.status_code == 200:
-        return response.json()['items']
+        shaped_json = node.adapter.shape_authors(node, response)
+
+        # In the case that we have a 200 but it turns out that author was invalid
+        if not shaped_json:
+            return list()
+
+        return shaped_json['items']
 
     return list()

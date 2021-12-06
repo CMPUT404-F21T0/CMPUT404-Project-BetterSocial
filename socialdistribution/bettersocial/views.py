@@ -1,5 +1,4 @@
 import json
-from typing import List, Tuple
 
 import requests
 import yarl
@@ -387,7 +386,7 @@ class FollowersView(generic.TemplateView):
             friend_request_list.append(inbox_item.inbox_object)
 
         # Start with local authors. Forgive my long ass code, no time to make sexy
-        author_nodes: List[Tuple[str, Tuple[str, dict, bool]]] = [(
+        author_nodes = [(
             'Local Authors',
             [
                 (author_json, uuid_helpers.extract_author_uuid_from_id(author_json['id']), Following.objects.filter(following_uuid = uuid_helpers.extract_author_uuid_from_id(author_json['id'])).exists())
