@@ -391,10 +391,24 @@ class AddCommentView(generic.CreateView):
 
 
 @method_decorator(login_required, name = 'dispatch')
-class InboxView(generic.ListView):
+class InboxView(generic.ListView, generic.DeleteView):
     model = InboxItem
     template_name = 'bettersocial/inbox.html'
     context_object_name = 'inbox_items'
+
+    success_url = reverse_lazy('bettersocial:inbox')
+
+    object = None
+
+    def get_object(self, queryset = None):
+        return self.get_queryset()
+
+    def delete(self, request, *args, **kwargs):
+        return HttpResponseRedirect(self.success_url)
+
+    def post(self, request, *args, **kwargs):
+        InboxItem.objects.filter(author = self.request.user.author).delete()
+        return HttpResponseRedirect(self.success_url)
 
     def get_queryset(self):
         """Return all inbox items."""

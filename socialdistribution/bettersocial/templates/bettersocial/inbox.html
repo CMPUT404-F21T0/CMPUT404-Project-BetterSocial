@@ -6,10 +6,11 @@
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/inbox.css' %}">
 
     {% if inbox_items %}
-        <!-- TODO: Implement clearing inbox -->
         <div class="flex-container" style="justify-content: center; margin-bottom: 1em;">
-            <input class="button" style="width: 20em;" id="refresh-button" type="button" onclick="clearInbox()"
-                   value="Clear Inbox">
+            <form method="post" action="./">
+                {% csrf_token %}
+                <input class="button" style="width: 20em;" id="refresh-button" type="submit" value="Clear Inbox">
+            </form>
         </div>
 
         <div class="inbox-container">
