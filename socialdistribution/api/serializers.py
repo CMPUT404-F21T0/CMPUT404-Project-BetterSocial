@@ -27,6 +27,10 @@ class AuthorSerializer(serializers.ModelSerializer):
         method_name = 'get_name'
     )
 
+    github = serializers.SerializerMethodField(
+        method_name = 'get_github'
+    )
+
     profileImage = serializers.Field(default = None)
 
     # Not required, but for convenience
@@ -34,6 +38,9 @@ class AuthorSerializer(serializers.ModelSerializer):
         view_name = 'api:post-list',
         lookup_url_kwarg = 'author_pk',
     )
+
+    def get_github(self, instance: Author):
+        return instance.github_url if instance.github_url else ""
 
     def get_host(self, instance: Author):
         return reverse('api:api-root', request = self.context['request'])
@@ -74,6 +81,7 @@ class FollowerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follower
         fields = '__all__'
+
 
 class CommentSerializer(serializers.ModelSerializer):
     type = models.CharField(max_length = 32)
