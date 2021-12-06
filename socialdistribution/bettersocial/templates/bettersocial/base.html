@@ -42,15 +42,21 @@
             </div>
         {% endif %}
 
-        <div class="header-item">
-            {% if user.is_authenticated %}
+        {% if user.is_authenticated %}
+            <div class="header-item">
                 <a type="button" style="padding: 5pt;" href="{% url 'bettersocial:post' %}">Make Post</a>
+            </div>
+            <div class="header-item">
                 <a type="button" style="padding: 5pt;" href="{% url 'users:logout' %}">Log Out</a>
-            {% else %}
+            </div>
+        {% else %}
+            <div class="header-item">
                 <a type="button" style="padding: 5pt;" href="{% url 'users:login' %}">Log In</a>
+            </div>
+            <div class="header-item">
                 <a type="button" style="padding: 5pt;" href="{% url 'users:register' %}">Register</a>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
 
     </div>
 </header>

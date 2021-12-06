@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db import models
+from markdownx.models import MarkdownxField
 
 from api import adapters
 from api.adapters import BaseAdapter
@@ -169,7 +170,7 @@ class Post(Likeable):
     content_type = models.CharField(max_length = 32, choices = ContentType.choices, default = ContentType.PLAIN)
 
     title = models.CharField(max_length = 255)
-    content = models.TextField(null = True, blank = True)
+    content = MarkdownxField(null = True, blank = True)
     description = models.TextField(null = True, blank = True)
 
     # Validated as a JSON list of non-empty strings.
@@ -302,6 +303,8 @@ class Node(AbstractBaseUser):
     last_login = None
 
     host = models.CharField(max_length = 255, unique = True)
+
+    display_name = models.CharField(max_length = 127, blank = True)
 
     # prefix between the host and the api endpoints. Example http://myhost.com/service/my/api/call, where "service" is the prefix.
     prefix = models.CharField(max_length = 32, default = 'service', blank = True)

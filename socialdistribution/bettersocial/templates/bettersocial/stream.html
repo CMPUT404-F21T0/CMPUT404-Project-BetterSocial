@@ -13,7 +13,19 @@
 
     <script>
         // TODO: Schedule
-        const refresh = () => getAllPosts('{{ user.author.uuid.hex }}');
+        const refresh = () => {
+
+            let refreshButton = document.getElementById('refresh-button');
+
+            if (refreshButton)
+                refreshButton.disabled = true;
+
+            getAllPosts('{{ user.author.uuid.hex }}')
+                .finally(() => {
+                    if (refreshButton)
+                        refreshButton.disabled = false;
+                });
+        };
         window.onload = refresh;
     </script>
 

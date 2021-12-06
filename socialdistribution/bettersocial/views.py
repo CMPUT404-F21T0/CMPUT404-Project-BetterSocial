@@ -4,7 +4,10 @@ import requests
 import yarl
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.contenttypes.models import ContentType as DjangoContentType
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseNotFound, HttpRequest, HttpResponseBadRequest
 from django.http.response import HttpResponseRedirect
@@ -14,10 +17,10 @@ from django.utils.decorators import method_decorator
 from django.views import generic
 from requests.auth import HTTPBasicAuth
 
-from api.helpers import author_helpers, uuid_helpers
+from api.helpers import author_helpers, uuid_helpers, remote_helpers
 from api.serializers import PostSerializer, CommentSerializer, AuthorSerializer
 from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment, Node
-from .forms import CommentCreationForm, PostCreationForm
+from .forms import CommentCreationForm, PostCreationForm, EditProfileForm
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -41,7 +44,7 @@ class ArticleDetailView(generic.TemplateView):
 
         if post_qs.exists():
             post = post_qs.get()
-            comments = post.comments.order_by('-published')
+            comments = post.comments.order_by('-published').all()
 
             return PostSerializer(post, context = { 'request': self.request }).data, \
                    CommentSerializer(comments, context = { 'request': self.request }, many = True).data
@@ -74,7 +77,7 @@ class ArticleDetailView(generic.TemplateView):
                     comments_response.raise_for_status()
 
                     if post_response.ok:
-                        return post_response.json(), comments_response.json() if comments_response.ok else []
+                        return post_response.json(), comments_response.json()['comments'] if comments_response.ok else []
 
                 else:
                     return item.inbox_object
@@ -113,7 +116,7 @@ class ArticleDetailView(generic.TemplateView):
         # context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
 
         context['post'] = json.dumps(post)
-        context['comments'] = json.dumps(comments['comments'])
+        context['comments'] = json.dumps(comments)
 
         return context
 
@@ -124,6 +127,14 @@ class UpdatePostView(generic.UpdateView):
     template_name = 'bettersocial/edit_post.html'
     form_class = PostCreationForm
 
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        post_qs = Post.objects.filter(uuid = self.kwargs['pk'])
+
+        if post_qs.exists() and post_qs.get().author.uuid != request.user.author.uuid:
+            raise PermissionDenied('You may not edit the post of another user!')
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         return reverse_lazy('bettersocial:article_details', kwargs = { 'pk': self.kwargs['pk'] })
 
@@ -133,6 +144,14 @@ class DeletePostView(generic.DeleteView):
     model = Post
     template_name = 'bettersocial/delete_post.html'
     success_url = reverse_lazy('bettersocial:index')
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        post_qs = Post.objects.filter(uuid = self.kwargs['pk'])
+
+        if post_qs.exists() and post_qs.get().author.uuid != request.user.author.uuid:
+            raise PermissionDenied('You may not delete the post of another user!')
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -145,22 +164,45 @@ class ProfileView(generic.base.TemplateView):
         context = super(ProfileView, self).get_context_data(**kwargs)
         # author is the owner of the page we're looking at
         # user is the logged in user
-        author_uuid = self.kwargs['uuid']
-        author = Author.objects.filter(uuid = author_uuid).prefetch_related('post_set').get()
-        context['author'] = author
+        author_uuid = context['uuid']
         user_uuid = self.request.user.author.uuid
 
-        if author_uuid == user_uuid:
-            context['posts'] = author.post_set.all()
-        else:
-            context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
-            context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
+        author_qs = Author.objects.filter(uuid = author_uuid)
+        if author_qs.exists():
+            context['author'] = AuthorSerializer(author_qs.get(), context = { 'request': self.request }).data
 
             # TODO: Might only need to have Public posts to be queried or publick and friends posts?
             context['posts'] = Post.objects.filter(
                 (Q(visibility = Post.Visibility.PUBLIC) & Q(author__uuid = author_uuid)) |
                 (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = user_uuid) & Q(author__following__following_uuid = user_uuid)) |
                 (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = user_uuid))).distinct().order_by('-published')
+        else:
+            context['author'] = remote_helpers.find_remote_author(author_uuid)
+
+            # get authors posts
+            node = remote_helpers.get_node_of_uuid(author_uuid)
+
+            url = (yarl.URL(node.host) / node.prefix / 'author' / str(author_uuid)).human_repr()
+            author_posts_resp = requests.get(
+                url,
+                headers = { 'Accept': 'application/json' },
+                auth = HTTPBasicAuth(node.node_username, node.node_password)  # Shouldn't need but in case
+            )
+
+            author_posts_resp.raise_for_status()
+
+            if author_posts_resp.ok:
+                context['posts'] = author_posts_resp.json()
+
+        context['author']['uuid'] = author_uuid
+
+        # Get follow button actions
+        if author_uuid == user_uuid:
+            author = Author.objects.filter(uuid = author_uuid).prefetch_related('post_set').get()
+            context['posts'] = author.post_set.all().order_by('-published')
+        else:
+            context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
+            context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
 
         return context
 
@@ -168,14 +210,63 @@ class ProfileView(generic.base.TemplateView):
 # CODE REFERENCED: https://stackoverflow.com/questions/54187625/django-on-button-click-call-function-view
 @method_decorator(login_required, name = 'dispatch')
 class ProfileActionView(generic.View):
+    def get(self, request, *args, **kwargs):
+        try:
+            location = self.request.GET['location']
+            host = self.request.GET['host']
+
+            # JavaScript moment
+            if location == 'undefined' or host == 'undefined':
+                return HttpResponseBadRequest('both query parameters must be defined!')
+
+        except KeyError:
+            return HttpResponseBadRequest('you must the location and host query parameters in the request!')
+
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, uuid, action, *args, **kwargs):
         author = Author.objects.filter(uuid = request.user.author.uuid).get()
-        if action == 'follow':
-            Following.objects.create(following_uuid = uuid, author = author)
-            Follower.objects.create(follower_uuid = author.uuid, author_id = uuid)
-        elif action == 'unfollow':
-            Following.objects.filter(following_uuid = uuid, author = author).delete()
-            Follower.objects.filter(follower_uuid = author.uuid, author_id = uuid).delete()
+
+        if Author.objects.filter(uuid = uuid).exists():
+            if action == 'follow':
+                Following.objects.create(following_uuid = uuid, author = author)
+                Follower.objects.create(follower_uuid = author.uuid, author_id = uuid)
+            elif action == 'unfollow':
+                Following.objects.filter(following_uuid = uuid, author = author).delete()
+                Follower.objects.filter(follower_uuid = author.uuid, author_id = uuid).delete()
+        # If target user is not local, need to send api request for follow req + unfollow
+        else:
+            if action == 'follow':
+                Following.objects.create(following_uuid = uuid, author = author)
+                author_serialized = AuthorSerializer(author, context = { 'request': self.request }).data
+                remote_author = remote_helpers.find_remote_author(uuid)
+                follower_json = {
+                    'type': 'Follow',
+                    'summary': f'{author_serialized["displayName"]} wants to follow {remote_author["displayName"]}',
+                    'actor': {
+                        'type': 'author',
+                        'id': author_serialized['id'],
+                        'url': author_serialized['url'],
+                        'host': author_serialized['host'],
+                        'displayName': author_serialized['displayName'],
+                        'github': author_serialized['github'] or '',
+                        'profileImage': author_serialized['profileImage'] or ''
+                    },
+                    'object': {
+                        'type': 'author',
+                        'id': remote_author['id'],
+                        'url': remote_author['url'],
+                        'host': remote_author['host'],
+                        'displayName': remote_author['displayName'],
+                        'github': remote_author['github'],
+                        'profileImage': remote_author['profileImage']
+                    }
+                }
+                remote_helpers.send_friend_request(uuid, follower_json)
+            if action == 'unfollow':
+                Following.objects.filter(following_uuid = uuid, author = author).delete()
+                remote_helpers.remove_follower(author.uuid, uuid)
+
         return HttpResponseRedirect(reverse('bettersocial:profile', args = (uuid,)))
 
 
@@ -184,6 +275,11 @@ class AddPostView(generic.CreateView):
     model = Post
     form_class = PostCreationForm
     template_name = 'bettersocial/postapost.html'
+
+    def get_success_url(self):
+        if 'done' in self.request.POST:
+            url = reverse_lazy('bettersocial:index')
+        return url
 
     # Changes require in the future
     # The form itself has error message for the user if he / she does it incorrectly.
@@ -277,15 +373,28 @@ class AddCommentView(generic.CreateView):
 
 
 @method_decorator(login_required, name = 'dispatch')
-class InboxView(generic.ListView):
+class InboxView(generic.ListView, generic.DeleteView):
     model = InboxItem
     template_name = 'bettersocial/inbox.html'
     context_object_name = 'inbox_items'
 
+    success_url = reverse_lazy('bettersocial:inbox')
+
+    object = None
+
+    def get_object(self, queryset = None):
+        return self.get_queryset()
+
+    def delete(self, request, *args, **kwargs):
+        return HttpResponseRedirect(self.success_url)
+
+    def post(self, request, *args, **kwargs):
+        InboxItem.objects.filter(author = self.request.user.author).delete()
+        return HttpResponseRedirect(self.success_url)
+
     def get_queryset(self):
         """Return all inbox items."""
-        content_type = DjangoContentType.objects.get_for_model(model = Follower)
-        return InboxItem.objects.filter(Q(dj_content_type = content_type))
+        return InboxItem.objects.filter(author = self.request.user.author)
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -362,12 +471,34 @@ class FollowersView(generic.TemplateView):
 
             friend_request_list.append(inbox_item.inbox_object)
 
+        # Start with local authors. Forgive my long ass code, no time to make sexy
+        author_nodes = [(
+            'Local Authors',
+            [
+                (author_json, uuid_helpers.extract_author_uuid_from_id(author_json['id']), Following.objects.filter(following_uuid = uuid_helpers.extract_author_uuid_from_id(author_json['id'])).exists())
+                for author_json in AuthorSerializer(Author.objects.exclude(uuid = self.request.user.author.uuid).all(), many = True, context = { 'request': self.request }).data
+            ]
+        )]
+
+        # For every node, add all of its authors in the same fashion as above, using its display name as the key
+        for node in Node.objects.all():
+            author_nodes.append((
+                node.display_name,
+                [
+                    (author_json, uuid_helpers.extract_author_uuid_from_id(author_json['id']), Following.objects.filter(following_uuid = uuid_helpers.extract_author_uuid_from_id(author_json['id'])).exists())
+                    for author_json in remote_helpers.get_all_authors(node)
+                ]
+            ))
+
         context['friend_request_list'] = [
             (follow_json['actor'], uuid_helpers.extract_author_uuid_from_id(follow_json['actor']['id'])) for follow_json in friend_request_list
         ]
+
         context['friends_list'] = [
             (author_json, uuid_helpers.extract_author_uuid_from_id(author_json['id'])) for author_json in friends_list
         ]
+
+        context['author_nodes'] = author_nodes
 
         return context
 
@@ -457,3 +588,21 @@ class SharePostActionView(generic.View):
 
         shared_post.save()
         return HttpResponseRedirect(reverse('bettersocial:article_details', args = (shared_post.uuid,)))
+
+
+@method_decorator(login_required, name = 'dispatch')
+class EditProfileView(generic.UpdateView):
+    template_name = 'bettersocial/edit_profile.html'
+    form_class = EditProfileForm
+    success_url = reverse_lazy('bettersocial:index')
+
+    def get_object(self, **kwargs):
+        return self.request.user
+
+
+@method_decorator(login_required, name = 'dispatch')
+class PasswordsChangeView(SuccessMessageMixin, PasswordChangeView):
+    template_name = 'bettersocial/change_password.html'
+    form_class = PasswordChangeForm
+    success_url = reverse_lazy('bettersocial:index')
+    success_message = "Password changed was successful"
