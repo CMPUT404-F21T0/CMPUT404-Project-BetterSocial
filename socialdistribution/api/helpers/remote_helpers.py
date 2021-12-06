@@ -45,6 +45,9 @@ def find_remote_author(author_uuid: Union[str, UUID]) -> Optional[Dict]:
         print(response)
         print(response.request.url)
 
+        # If it was cached, and it's no longer there, it should error
+        response.raise_for_status()
+
         # Found user, cache and return
         if response.status_code == 200:
             return response.json()
