@@ -42,7 +42,7 @@ def find_remote_author(author_uuid: Union[str, UUID]) -> Optional[Dict]:
         response = cached_node.adapter.get_author(cached_node, author_uuid)
 
         print(f'\nresponse from node {cached_node.host}:')
-        print(response)
+        print(response.content)
         print(response.request.url)
 
         # If it was cached, and it's no longer there, it should error
@@ -65,7 +65,8 @@ def find_remote_author(author_uuid: Union[str, UUID]) -> Optional[Dict]:
             response = node.adapter.get_author(node, author_uuid)
 
             print(f'\nresponse from node {node.host}:')
-            print(response)
+            # import pdb; pdb.set_trace()
+            print(response.content.decode('utf-8'))
             print(response.request.url)
 
             # Found user, cache and return
@@ -148,3 +149,83 @@ def get_all_authors(node: Node) -> List[Dict]:
         return shaped_json['items']
 
     return list()
+
+
+def send_friend_request(author_uuid: Union[str, UUID], follower_json: Dict) -> Optional[Dict]:
+    if isinstance(author_uuid, str):
+        author_uuid = UUID(author_uuid)
+
+    cached_node = get_node_of_uuid(author_uuid)
+
+    if cached_node:
+        response = cached_node.adapter.send_friend_request(cached_node, author_uuid, follower_json)
+
+        print(f'\nresponse from node {cached_node.host}:')
+        print(response.content.decode('utf-8'))
+        print(response.request.url)
+
+        # If it was cached, and it's no longer there, it should error
+        response.raise_for_status()
+
+        # Found user, cache and return
+        if response.status_code == 200:
+            return response.json()
+
+        print(f'Could not find UUID "{author_uuid}" on {cached_node.host}\'s server! Perhaps the user was deleted?', file = stderr)
+
+    else:
+        for node in Node.objects.all():
+            response = node.adapter.send_friend_request(node, author_uuid, follower_json)
+
+            print(f'\nresponse from node {node.host}:')
+            print(response.content.decode('utf-8'))
+            print(response.request.url)
+
+            # Found user, cache and return
+            if response.status_code == 200:
+                cache_host_of_uuid(author_uuid, node)
+                return response.json()
+
+        print(f'Could not find UUID "{author_uuid}" on any remote server! Perhaps the user was deleted?', file = stderr)
+        return None    
+
+def remove_follower(user_uuid: Union[str, UUID], author_uuid: Union[str, UUID]) -> Optional[Dict]:
+    if isinstance(author_uuid, str):
+        author_uuid = UUID(author_uuid)
+
+    if isinstance(user_uuid, str):
+        user_uuid = UUID(user_uuid)
+
+    cached_node = get_node_of_uuid(author_uuid)
+
+    if cached_node:
+        response = cached_node.adapter.remove_follower(cached_node, author_uuid, user_uuid)
+
+        print(f'\nresponse from node {cached_node.host}:')
+        print(response.content.decode('utf-8'))
+        print(response.request.url)
+
+        # If it was cached, and it's no longer there, it should error
+        response.raise_for_status()
+
+        # Found user, cache and return
+        if response.status_code == 200:
+            return response.json()
+
+        print(f'Could not find UUID "{author_uuid}" on {cached_node.host}\'s server! Perhaps the user was deleted?', file = stderr)
+
+    else:
+        for node in Node.objects.all():
+            response = node.adapter.remove_follower(node, author_uuid, user_uuid)
+
+            print(f'\nresponse from node {node.host}:')
+            print(response.content.decode('utf-8'))
+            print(response.request.url)
+
+            # Found user, cache and return
+            if response.status_code == 200:
+                cache_host_of_uuid(author_uuid, node)
+                return response.json()
+
+        print(f'Could not find UUID "{author_uuid}" on any remote server! Perhaps the user was deleted?', file = stderr)
+        return None

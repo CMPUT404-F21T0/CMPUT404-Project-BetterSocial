@@ -182,7 +182,7 @@ class ProfileView(generic.base.TemplateView):
             # get authors posts
             node = remote_helpers.get_node_of_uuid(author_uuid)
 
-            url = (yarl.URL(node.host) / node.prefix / 'author' / str(author_uuid) / '').human_repr()
+            url = (yarl.URL(node.host) / node.prefix / 'author' / str(author_uuid)).human_repr()
             author_posts_resp = requests.get(
                 url,
                 headers = { 'Accept': 'application/json' },
@@ -193,6 +193,7 @@ class ProfileView(generic.base.TemplateView):
 
             if author_posts_resp.ok:
                 context['posts'] = author_posts_resp.json()
+
         context['author']['uuid'] = author_uuid
 
         # Get follow button actions
@@ -225,30 +226,32 @@ class ProfileActionView(generic.View):
 
     def post(self, request, uuid, action, *args, **kwargs):
         author = Author.objects.filter(uuid = request.user.author.uuid).get()
-        if action == 'follow':
-            Following.objects.create(following_uuid = uuid, author = author)
-            Follower.objects.create(follower_uuid = author.uuid, author_id = uuid)
-        elif action == 'unfollow':
-            Following.objects.filter(following_uuid = uuid, author = author).delete()
-            Follower.objects.filter(follower_uuid = author.uuid, author_id = uuid).delete()
 
+        if Author.objects.filter(uuid = uuid).exists():
+            if action == 'follow':
+                Following.objects.create(following_uuid = uuid, author = author)
+                Follower.objects.create(follower_uuid = author.uuid, author_id = uuid)
+            elif action == 'unfollow':
+                Following.objects.filter(following_uuid = uuid, author = author).delete()
+                Follower.objects.filter(follower_uuid = author.uuid, author_id = uuid).delete()
         # If target user is not local, need to send api request for follow req + unfollow
-        if not Author.objects.filter(uuid = uuid).exists():
+        else:
             node = remote_helpers.get_node_of_uuid(uuid)
             if action == 'follow':
+                Following.objects.create(following_uuid = uuid, author = author)
                 author_serialized = AuthorSerializer(author, context = { 'request': self.request }).data
                 remote_author = remote_helpers.find_remote_author(uuid)
                 follower_json = {
                     'type': 'Follow',
-                    'summary': f'{author_serialized.displayName} wants to follow user at {uuid}',
+                    'summary': f'{author_serialized["displayName"]} wants to follow {remote_author["displayName"]}',
                     'actor': {
                         'type': 'author',
-                        'id': author_serialized.id,
-                        'url': author_serialized.url,
-                        'host': author_serialized.host,
-                        'displayName': author_serialized.displayName,
-                        'github': '',
-                        'profileImage': ''
+                        'id': author_serialized['id'],
+                        'url': author_serialized['url'],
+                        'host': author_serialized['host'],
+                        'displayName': author_serialized['displayName'],
+                        'github': author_serialized['github'] or '',
+                        'profileImage': author_serialized['profileImage'] or ''
                     },
                     'object': {
                         'type': 'author',
@@ -257,33 +260,13 @@ class ProfileActionView(generic.View):
                         'host': remote_author['host'],
                         'displayName': remote_author['displayName'],
                         'github': remote_author['github'],
-                        'profileImage': remote_author['profileimage']
+                        'profileImage': remote_author['profileImage']
                     }
                 }
-
-                # TODO: need foreign author uuid with remote host url
-                url = (yarl.URL(node.host) / node.prefix / 'author' / str(author.uuid) / 'inbox' / '').human_repr()
-                response = requests.post(
-                    url,
-                    headers = { 'Accept': 'application/json' },
-                    auth = HTTPBasicAuth(node.node_username, node.node_password),
-                    json = follower_json
-                )
-
-                response.raise_for_status()
-
-                if response.ok:
-                    print(response.content)
+                remote_helpers.send_friend_request(uuid, follower_json)
             if action == 'unfollow':
-                url = (yarl.URL(node.host) / node.prefix / 'author' / uuid / 'followers' / str(author.uuid) / '').human_repr()
-                response = requests.delete(
-                    url,
-                    headers = { 'Accept': 'application/json' },
-                )
-
-                response.raise_for_status()
-                if response.ok:
-                    print(response.content)
+                Following.objects.filter(following_uuid = uuid, author = author).delete()
+                remote_helpers.remove_follower(author.uuid, uuid)
 
         return HttpResponseRedirect(reverse('bettersocial:profile', args = (uuid,)))
 
