@@ -78,7 +78,7 @@ class BaseAdapter:
             json = follower_json
         )
 
-    def get_inbox_url(node, author_uuid: Union[str, UUID], *args, **kwargs):
+    def get_inbox_url(self, node, author_uuid: Union[str, UUID], *args, **kwargs):
         if isinstance(author_uuid, UUID):
             author_uuid = str(author_uuid)
 

@@ -236,7 +236,6 @@ class ProfileActionView(generic.View):
                 Follower.objects.filter(follower_uuid = author.uuid, author_id = uuid).delete()
         # If target user is not local, need to send api request for follow req + unfollow
         else:
-            node = remote_helpers.get_node_of_uuid(uuid)
             if action == 'follow':
                 Following.objects.create(following_uuid = uuid, author = author)
                 author_serialized = AuthorSerializer(author, context = { 'request': self.request }).data
