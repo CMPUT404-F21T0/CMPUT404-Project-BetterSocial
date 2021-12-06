@@ -1,13 +1,13 @@
 import json
-from django.contrib.auth.forms import PasswordChangeForm
 
 import requests
 import yarl
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
-from django.contrib.contenttypes.models import ContentType as DjangoContentType
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseNotFound, HttpRequest, HttpResponseBadRequest
 from django.http.response import HttpResponseRedirect
@@ -127,6 +127,14 @@ class UpdatePostView(generic.UpdateView):
     template_name = 'bettersocial/edit_post.html'
     form_class = PostCreationForm
 
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        post_qs = Post.objects.filter(uuid = self.kwargs['pk'])
+
+        if post_qs.exists() and post_qs.get().author.uuid != request.user.author.uuid:
+            raise PermissionDenied('You may not edit the post of another user!')
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         return reverse_lazy('bettersocial:article_details', kwargs = { 'pk': self.kwargs['pk'] })
 
@@ -136,6 +144,14 @@ class DeletePostView(generic.DeleteView):
     model = Post
     template_name = 'bettersocial/delete_post.html'
     success_url = reverse_lazy('bettersocial:index')
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        post_qs = Post.objects.filter(uuid = self.kwargs['pk'])
+
+        if post_qs.exists() and post_qs.get().author.uuid != request.user.author.uuid:
+            raise PermissionDenied('You may not delete the post of another user!')
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -465,14 +481,16 @@ class SharePostActionView(generic.View):
         shared_post.save()
         return HttpResponseRedirect(reverse('bettersocial:article_details', args = (shared_post.uuid,)))
 
+
 @method_decorator(login_required, name = 'dispatch')
 class EditProfileView(generic.UpdateView):
     template_name = 'bettersocial/edit_profile.html'
     form_class = EditProfileForm
     success_url = reverse_lazy('bettersocial:index')
-    
-    def get_object(self):
+
+    def get_object(self, **kwargs):
         return self.request.user
+
 
 @method_decorator(login_required, name = 'dispatch')
 class PasswordsChangeView(SuccessMessageMixin, PasswordChangeView):
