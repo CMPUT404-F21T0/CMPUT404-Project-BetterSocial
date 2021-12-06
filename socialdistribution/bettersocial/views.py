@@ -169,7 +169,7 @@ class ProfileView(generic.base.TemplateView):
 
         author_qs = Author.objects.filter(uuid = author_uuid)
         if author_qs.exists():
-            context['author'] = AuthorSerializer(author_qs.get(), context = {'request': self.request}).data
+            context['author'] = AuthorSerializer(author_qs.get(), context = { 'request': self.request }).data
 
             # TODO: Might only need to have Public posts to be queried or publick and friends posts?
             context['posts'] = Post.objects.filter(
@@ -178,15 +178,15 @@ class ProfileView(generic.base.TemplateView):
                 (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = user_uuid))).distinct().order_by('-published')
         else:
             context['author'] = remote_helpers.find_remote_author(author_uuid)
-            
+
             # get authors posts
             node = remote_helpers.get_node_of_uuid(author_uuid)
 
-            url = (yarl.URL(node.host) / node.prefix / 'author' / author_uuid / '').human_repr()
+            url = (yarl.URL(node.host) / node.prefix / 'author' / str(author_uuid) / '').human_repr()
             author_posts_resp = requests.get(
                 url,
-                headers = {'Accept': 'application/json'},
-                auth = HTTPBasicAuth(node.node_username, node.node_password)    # Shouldn't need but in case
+                headers = { 'Accept': 'application/json' },
+                auth = HTTPBasicAuth(node.node_username, node.node_password)  # Shouldn't need but in case
             )
 
             author_posts_resp.raise_for_status()
@@ -204,6 +204,7 @@ class ProfileView(generic.base.TemplateView):
             context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
 
         return context
+
 
 # CODE REFERENCED: https://stackoverflow.com/questions/54187625/django-on-button-click-call-function-view
 @method_decorator(login_required, name = 'dispatch')
@@ -261,7 +262,7 @@ class ProfileActionView(generic.View):
                 }
 
                 # TODO: need foreign author uuid with remote host url
-                url = (yarl.URL(node.host) / node.prefix / 'author' / author.uuid / 'inbox' / '').human_repr()
+                url = (yarl.URL(node.host) / node.prefix / 'author' / str(author.uuid) / 'inbox' / '').human_repr()
                 response = requests.post(
                     url,
                     headers = { 'Accept': 'application/json' },
@@ -274,7 +275,7 @@ class ProfileActionView(generic.View):
                 if response.ok:
                     print(response.content)
             if action == 'unfollow':
-                url = (yarl.URL(node.host) / node.prefix / 'author' / uuid / 'followers' / author.uuid / '').human_repr()
+                url = (yarl.URL(node.host) / node.prefix / 'author' / uuid / 'followers' / str(author.uuid) / '').human_repr()
                 response = requests.delete(
                     url,
                     headers = { 'Accept': 'application/json' },
