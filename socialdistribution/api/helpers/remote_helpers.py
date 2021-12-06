@@ -169,7 +169,11 @@ def send_friend_request(author_uuid: Union[str, UUID], follower_json: Dict) -> O
 
         # Found user, cache and return
         if response.status_code == 200:
-            return response.json()
+            if bool(response.content):
+                return response.json()
+            else:
+                return None
+        
 
         print(f'Could not find UUID "{author_uuid}" on {cached_node.host}\'s server! Perhaps the user was deleted?', file = stderr)
 
