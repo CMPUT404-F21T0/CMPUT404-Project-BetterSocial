@@ -15,6 +15,9 @@ class BaseAdapter:
         self.session = requests.session()
         self.session.headers['Accept'] = 'application/json'
 
+    def post_inbox_item(self, request, *args, **kwargs):
+        return request
+
     def send_to_inbox(self, node, author_uuid: Union[str, UUID], post_json: Dict, *args, **kwargs) -> requests.Response:
         return self.session.post(
             self.get_inbox_url(node, author_uuid),
