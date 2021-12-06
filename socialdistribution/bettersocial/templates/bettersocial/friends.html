@@ -16,6 +16,9 @@
             <input class="page-selector-button" id="page-friends" type="radio" name="page-selector"
                    onclick="showFriendListPage()" checked>
             <label class="button" for="page-friends">Friend List</label>
+            <input class="page-selector-button" id="page-authors" type="radio" name="page-selector"
+                   onclick="showAuthorsPage()">
+            <label class="button" for="page-authors">Authors</label>
         </div>
         <div id="friend-request-page" hidden>
             <div
@@ -78,6 +81,59 @@
                     </div>
                 {% else %}
                     <p>No friends.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div id="author-list-page" hidden>
+            <div
+                    class="stream"
+                    style="display: flex; flex-direction: column; overflow: hidden;"
+            >
+                {% if author_nodes %}
+                    {% for node_label, author_list in author_nodes %}
+
+                        <h3>{{ node_label }}</h3>
+                        <span class="grid-rule"></span>
+
+                        {% if author_list|length > 0 %}
+                            <div class="grid-wrapper">
+                                {% for author, uuid, following in author_list %}
+                                    <a class="grid-item grid-span-3 grid-left flex-container flex-center"
+                                       href="{% url 'bettersocial:profile' uuid %}">
+                                <span class="grid-item grid-left iconify" data-icon="iconoir:profile-circled"
+                                      data-width="56"
+                                      data-height="56"></span>
+                                        <span style="margin-left: 1em">{{ author.displayName }}</span>
+                                    </a>
+                                    <!-- TODO: Unfollow button -->
+                                    {% if following %}
+                                        <form action="{% url 'bettersocial:delete_following' %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="author_uuid" value="{{ uuid }}">
+                                            <input type="hidden" name="next" value="{{ request.path }}">
+                                            <input type="submit" class="grid-item button" style="color: red"
+                                                   value="Unfollow">
+                                        </form>
+                                    {% else %}
+                                        <form action="{% url 'bettersocial:add_following' %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="author_uuid" value="{{ uuid }}">
+                                            <input type="hidden" name="next" value="{{ request.path }}">
+                                            <input type="submit" class="grid-item button" value="Follow">
+                                        </form>
+                                    {% endif %}
+                                    <form action="{% url 'bettersocial:profile' uuid %}">
+                                        <input type="submit" class="grid-item button" value="Profile">
+                                    </form>
+                                    <span class="grid-rule"></span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p>No authors.</p>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p>No author list available.</p>
                 {% endif %}
             </div>
         </div>
