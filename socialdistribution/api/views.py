@@ -3,17 +3,20 @@ from uuid import UUID
 
 import requests
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
 from django.http.response import HttpResponseServerError
 from requests.auth import HTTPBasicAuth
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.exceptions import PermissionDenied, ValidationError, NotFound
+from rest_framework.request import Request
 from rest_framework.response import Response
 from yarl import URL
 
 from api import pagination
 from api import serializers
 from api.helpers import uuid_helpers, remote_helpers
+from api.serializers import PostSerializer
 from bettersocial import models
 from bettersocial.models import Post, InboxItem, Node, Author, Follower
 
@@ -330,3 +333,39 @@ class AllPostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
             (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = author_uuid) & Q(author__following__following_uuid = author_uuid)) |
             (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = author_uuid))
         ).distinct().order_by('-published')
+
+
+class SendPostRemoteViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
+    permission_classes = []
+    serializer_class = serializers.RemotePostSerializer
+
+    def create(self, request: Request, *args, **kwargs):
+        # output_json = serializers.PostSerializer(Post.objects.first(), context = {'request': self.request}).data
+
+        post_json = PostSerializer(Post.objects.filter(uuid = request.data['post_uuid']).get(), context = { 'request': request }).data
+        author_uuids = request.data['author_uuids']
+
+        for author_uuid in author_uuids:
+
+            if isinstance(author_uuid, str):
+                author_uuid = UUID(author_uuid)
+
+            try:
+                local_author = Author.objects.filter(uuid = author_uuid).get()
+
+                # Save to local user's inbox
+                InboxItem.objects.create(author = local_author, dj_content_type = DjangoContentType.objects.get_for_model(Post), inbox_object = post_json)
+
+            # Author is remote, send to inbox
+            except Author.DoesNotExist:
+
+                # Find and cache author
+                remote_helpers.find_remote_author(author_uuid)
+                node = remote_helpers.get_node_of_uuid(author_uuid)
+
+                # Send to inbox -- not much we can do if it fails.
+                response = node.adapter.send_to_inbox(node, author_uuid, post_json = post_json)
+
+                print(f'POST remote inbox for {author_uuid} ({node.display_name}): {response}\n')
+
+        return Response(request.data)

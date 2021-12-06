@@ -35,7 +35,7 @@
                                       data-height="56"></span>
                                 <span style="margin-left: 1em">{{ author.displayName }}</span>
                             </a>
-                            <form action="{% url 'bettersocial:add_following' %}" method="post">
+                            <form action="{% url 'bettersocial:profile_action' uuid 'follow' %}" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="author_uuid" value="{{ uuid }}">
                                 <input type="hidden" name="next" value="{{ request.path }}">
@@ -67,7 +67,7 @@
                                       data-height="56"></span>
                                 <span style="margin-left: 1em">{{ author.displayName }}</span>
                             </a>
-                            <form action="{% url 'bettersocial:delete_following' %}" method="post">
+                            <form action="{% url 'bettersocial:profile_action' uuid 'unfollow' %}" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="author_uuid" value="{{ uuid }}">
                                 <input type="hidden" name="next" value="{{ request.path }}">
@@ -107,7 +107,8 @@
                                     </a>
                                     <!-- TODO: Unfollow button -->
                                     {% if following %}
-                                        <form action="{% url 'bettersocial:delete_following' %}" method="post">
+                                        <form action="{% url 'bettersocial:profile_action' uuid 'unfollow' %}"
+                                              method="post">
                                             {% csrf_token %}
                                             <input type="hidden" name="author_uuid" value="{{ uuid }}">
                                             <input type="hidden" name="next" value="{{ request.path }}">
@@ -115,7 +116,8 @@
                                                    value="Unfollow">
                                         </form>
                                     {% else %}
-                                        <form action="{% url 'bettersocial:add_following' %}" method="post">
+                                        <form action="{% url 'bettersocial:profile_action' uuid 'follow' %}"
+                                              method="post">
                                             {% csrf_token %}
                                             <input type="hidden" name="author_uuid" value="{{ uuid }}">
                                             <input type="hidden" name="next" value="{{ request.path }}">

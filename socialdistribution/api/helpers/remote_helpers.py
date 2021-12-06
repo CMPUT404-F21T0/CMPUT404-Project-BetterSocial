@@ -187,7 +187,8 @@ def send_friend_request(author_uuid: Union[str, UUID], follower_json: Dict) -> O
                 return response.json()
 
         print(f'Could not find UUID "{author_uuid}" on any remote server! Perhaps the user was deleted?', file = stderr)
-        return None    
+        return None
+
 
 def remove_follower(user_uuid: Union[str, UUID], author_uuid: Union[str, UUID]) -> Optional[Dict]:
     if isinstance(author_uuid, str):
@@ -206,7 +207,7 @@ def remove_follower(user_uuid: Union[str, UUID], author_uuid: Union[str, UUID]) 
         print(response.request.url)
 
         # If it was cached, and it's no longer there, it should error
-        response.raise_for_status()
+        # response.raise_for_status()
 
         # Found user, cache and return
         if response.status_code == 200:

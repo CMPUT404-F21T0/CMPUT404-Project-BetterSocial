@@ -395,3 +395,14 @@ class InboxItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = InboxItem
         fields = ['inbox_object']
+
+
+class RemotePostSerializer(serializers.Serializer):
+    post = models.JSONField()
+    author_uuids = models.JSONField()
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass

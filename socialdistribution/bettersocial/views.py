@@ -1,4 +1,6 @@
 import json
+from typing import List
+from uuid import UUID
 
 import requests
 import yarl
@@ -9,7 +11,7 @@ from django.contrib.auth.views import PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import HttpResponseNotFound, HttpRequest, HttpResponseBadRequest
+from django.http import HttpResponseNotFound, HttpRequest, HttpResponseBadRequest, HttpResponseServerError
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -176,33 +178,43 @@ class ProfileView(generic.base.TemplateView):
                 (Q(visibility = Post.Visibility.PUBLIC) & Q(author__uuid = author_uuid)) |
                 (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = user_uuid) & Q(author__following__following_uuid = user_uuid)) |
                 (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = user_uuid))).distinct().order_by('-published')
+
+            # Coerce into JSON, when local
+            context['posts'] = PostSerializer(context['posts'], many = True, context = { 'request': self.request }).data
         else:
             context['author'] = remote_helpers.find_remote_author(author_uuid)
 
             # get authors posts
             node = remote_helpers.get_node_of_uuid(author_uuid)
 
-            url = (yarl.URL(node.host) / node.prefix / 'author' / str(author_uuid)).human_repr()
-            author_posts_resp = requests.get(
-                url,
-                headers = { 'Accept': 'application/json' },
-                auth = HTTPBasicAuth(node.node_username, node.node_password)  # Shouldn't need but in case
-            )
+            author_posts_resp = node.adapter.get_posts(node, author_uuid)
 
             author_posts_resp.raise_for_status()
 
+            print(f'Response: {author_posts_resp}')
+
             if author_posts_resp.ok:
-                context['posts'] = author_posts_resp.json()
+                try:
+                    context['posts'] = author_posts_resp.json()['items']
+                except TypeError:
+                    context['posts'] = author_posts_resp.json()
 
         context['author']['uuid'] = author_uuid
 
         # Get follow button actions
         if author_uuid == user_uuid:
             author = Author.objects.filter(uuid = author_uuid).prefetch_related('post_set').get()
-            context['posts'] = author.post_set.all().order_by('-published')
+            context['posts'] = PostSerializer(author.post_set.all().order_by('-published'), many = True, context = { 'request': self.request }).data
         else:
             context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
             context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
+
+        for post in context['posts']:
+            # Make post UUID available in _uuid
+            post['uuid'] = uuid_helpers.extract_post_uuid_from_id(post['id']).hex
+
+            # Make author UUID available in author._uuid
+            post['author']['uuid'] = uuid_helpers.extract_author_uuid_from_id(post['author']['id']).hex
 
         return context
 
@@ -281,6 +293,16 @@ class AddPostView(generic.CreateView):
             url = reverse_lazy('bettersocial:index')
         return url
 
+    def _send_post_to_authors(self, request, post: Post, author_uuids: List[UUID]):
+        return requests.post(
+            (yarl.URL(request._current_scheme_host) / 'api' / 'send-post' / '').human_repr(),
+            headers = { 'Accept': 'application/json' },
+            json = {
+                'post_uuid': str(post.uuid),
+                'author_uuids': [str(u) for u in author_uuids]
+            }
+        )
+
     # Changes require in the future
     # The form itself has error message for the user if he / she does it incorrectly.
     def post(self, request, **kwargs):
@@ -289,6 +311,18 @@ class AddPostView(generic.CreateView):
         obj = form.save(commit = False)
         obj.author = Author(self.request.user.author.uuid, self.request.user)  # Automatically Put the current user as the author
         obj.save()
+
+        # Could include unlisted
+        if obj.visibility == Post.Visibility.PRIVATE:
+            self._send_post_to_authors(request, obj, [obj.recipient_uuid])
+
+        elif obj.visibility == Post.Visibility.FRIENDS:
+            friends: List[UUID] = author_helpers.get_author_friends_as_uuid(obj.author)
+            self._send_post_to_authors(request, obj, friends)
+
+        elif obj.visibility == Post.Visibility.PUBLIC:
+            followers: List[UUID] = [f.follower_uuid for f in obj.author.follower_set.all()]
+            self._send_post_to_authors(request, obj, followers)
 
         return redirect('bettersocial:index')
 
@@ -536,6 +570,8 @@ class CreateFollowingView(generic.CreateView):
         return Following.objects.none()
 
     def post(self, request, *args, **kwargs):
+
+        raise HttpResponseServerError('deprecated!')
 
         author_uuid = request.user.author.uuid
         following_uuid = request.POST.get('author_uuid')

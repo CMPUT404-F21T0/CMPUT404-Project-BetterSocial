@@ -5,7 +5,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/profile.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/index.css' %}">
     <script type="text/javascript" src="{% static "bettersocial/profile.js" %}"></script>
-    
+
     <div class="profile">
         <div class="profile-header">
             <div class="profile-pic">
@@ -53,7 +53,7 @@
                 {% endif %}
 
                 {% if author.github %}
-                    <script> var git = "{{ author.github }}" </script>
+                    <script> var git = "{{ author.github }}"; </script>
                     <button onclick="showGitActivity(git)">Github Activity</button>
                 {% endif %}
             </div>
@@ -62,15 +62,15 @@
         <div id="github-activity" style="border: 1px solid black" hidden>
         </div>
         <br>
-        {% if user.author.uuid == author.uuid %}
+        {#        {% if user.author.uuid == author.uuid %}#}
         <h1> My Post Activity Stream ...</h1>
         <br>
-            {% for post in posts %}
-                {% if user.author.uuid == author.uuid %}
-                    {% include 'bettersocial/post-preview.html' %}
-                {% endif %}
-            {% endfor %}
-        {% endif %}
+        {% for post in posts %}
+            {#                {% if user.author.uuid == author.uuid %}#}
+            {% include 'bettersocial/post-preview.html' %}
+            {#                {% endif %}#}
+        {% endfor %}
+        {#        {% endif %}#}
 
     </div>
 {% endblock %}
