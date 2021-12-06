@@ -59,10 +59,15 @@ class ArticleDetailView(generic.TemplateView):
 
                 # IF the post is public, we should get the most recent version
                 if item.inbox_object['visibility'].upper() == Post.Visibility.PUBLIC.value.upper():
-                    node = Node.objects.filter(host__contains = item.inbox_object['author']['host']).get()
+                    node = Node.objects.filter(host__contains = yarl.URL(item.inbox_object['author']['host']).origin().human_repr()).get()
+
+                    try:
+                        url = item.inbox_object['url']
+                    except KeyError:
+                        url = item.inbox_object['id']
 
                     post_response = requests.get(
-                        item.inbox_object['url'],
+                        url,
                         headers = { 'Accept': 'application/json' },
                         auth = HTTPBasicAuth(node.node_username, node.node_password)
                     )
@@ -359,7 +364,7 @@ class AddCommentView(generic.CreateView):
                 return super().post(request, *args, **kwargs)
             else:
                 # Post must be remote, sending to url
-                node = Node.objects.filter(host__contains = self.request.GET['host']).get()
+                node = Node.objects.filter(host__contains = yarl.URL(self.request.GET['host']).origin().human_repr()).get()
 
                 form_comment: Comment = form.instance
 

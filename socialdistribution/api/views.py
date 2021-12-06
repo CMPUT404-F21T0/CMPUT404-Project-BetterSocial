@@ -2,6 +2,7 @@ from collections import OrderedDict
 from uuid import UUID
 
 import requests
+import yarl
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType as DjangoContentType
 from django.db.models import Q
@@ -270,10 +271,17 @@ class AllRemotePostsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
             if item.inbox_object['visibility'] == Post.Visibility.PUBLIC:
 
-                node = Node.objects.filter(host__contains = item.inbox_object['author']['host']).get()
+                host = yarl.URL(item.inbox_object['author']['host']).origin().human_repr()
+
+                node = Node.objects.filter(host__contains = host).get()
+
+                try:
+                    url = item.inbox_object['url']
+                except KeyError:
+                    url = item.inbox_object['id']
 
                 response = requests.head(
-                    URL(item.inbox_object['url']).human_repr(),
+                    URL(url).human_repr(),
                     headers = { 'Accept': 'application/json' },
                     auth = HTTPBasicAuth(node.node_username, node.node_password),
                 )
