@@ -160,20 +160,6 @@ class ProfileView(generic.base.TemplateView):
     template_name = 'bettersocial/profile.html'
     context_object_name = "current_user"
 
-    def get(self, request, *args, **kwargs):
-        # try:
-        #     location = self.request.GET['location']
-        #     host = self.request.GET['host']
-
-        #     # JavaScript moment
-        #     if location == 'undefined' or host == 'undefined':
-        #         return HttpResponseBadRequest('both query parameters must be defined!')
-
-        # except KeyError:
-        #     return HttpResponseBadRequest('you must the location and host query parameters in the request!')
-
-        return super().get(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         context = super(ProfileView, self).get_context_data(**kwargs)
         # author is the owner of the page we're looking at
@@ -194,9 +180,7 @@ class ProfileView(generic.base.TemplateView):
             context['author'] = remote_helpers.find_remote_author(author_uuid)
             
             # get authors posts
-            node = remote_helpers.get_node_of_uuid((author_uuid))
-            if not node:
-                node = Node.objects.filter().get(host__contains = self.request.GET['host']).get()
+            node = remote_helpers.get_node_of_uuid(author_uuid)
 
             url = (yarl.URL(node.host) / node.prefix / 'author' / author_uuid / '').human_repr()
             author_posts_resp = requests.get(
@@ -209,6 +193,7 @@ class ProfileView(generic.base.TemplateView):
 
             if author_posts_resp.ok:
                 context['posts'] = author_posts_resp.json()
+        context['author']['uuid'] = author_uuid
 
         # Get follow button actions
         if author_uuid == user_uuid:
@@ -223,6 +208,20 @@ class ProfileView(generic.base.TemplateView):
 # CODE REFERENCED: https://stackoverflow.com/questions/54187625/django-on-button-click-call-function-view
 @method_decorator(login_required, name = 'dispatch')
 class ProfileActionView(generic.View):
+    def get(self, request, *args, **kwargs):
+        try:
+            location = self.request.GET['location']
+            host = self.request.GET['host']
+
+            # JavaScript moment
+            if location == 'undefined' or host == 'undefined':
+                return HttpResponseBadRequest('both query parameters must be defined!')
+
+        except KeyError:
+            return HttpResponseBadRequest('you must the location and host query parameters in the request!')
+
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, uuid, action, *args, **kwargs):
         author = Author.objects.filter(uuid = request.user.author.uuid).get()
         if action == 'follow':
@@ -234,7 +233,7 @@ class ProfileActionView(generic.View):
 
         # If target user is not local, need to send api request for follow req + unfollow
         if not Author.objects.filter(uuid = uuid).exists():
-            node = Node.objects.filter(host__contains = self.request.GET['host']).get()
+            node = remote_helpers.get_node_of_uuid(uuid)
             if action == 'follow':
                 author_serialized = AuthorSerializer(author, context = { 'request': self.request }).data
                 remote_author = remote_helpers.find_remote_author(uuid)
@@ -275,7 +274,15 @@ class ProfileActionView(generic.View):
                 if response.ok:
                     print(response.content)
             if action == 'unfollow':
-                pass
+                url = (yarl.URL(node.host) / node.prefix / 'author' / uuid / 'followers' / author.uuid / '').human_repr()
+                response = requests.delete(
+                    url,
+                    headers = { 'Accept': 'application/json' },
+                )
+
+                response.raise_for_status()
+                if response.ok:
+                    print(response.content)
 
         return HttpResponseRedirect(reverse('bettersocial:profile', args = (uuid,)))
 
