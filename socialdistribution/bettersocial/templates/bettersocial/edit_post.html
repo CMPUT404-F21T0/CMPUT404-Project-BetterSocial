@@ -1,102 +1,108 @@
 {% extends 'bettersocial/base.html' %}
 {% block content %}
-{% load static %}
+    {% load static %}
 
-<!-- Style Sheet and References -->
-<link rel="stylesheet" type="text/css" href="{% static 'bettersocial/postapost.css' %}">
+    <!-- Style Sheet and References -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/postapost.css' %}">
+    <script type="text/javascript" src="{% static "bettersocial/post.js" %}"></script>
 
-<h1>Edit a Post</h1>
+    <h1>Edit a Post</h1>
 
-</br></br>
+    <br>
 
-<!-- Temporary HTML / CSS -->
-<div class="container"></div>
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="row">
-            <div class="size-25">
-                {{ form.title.label_tag}}
+    <!-- Temporary HTML / CSS -->
+    <div class="container">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                <div class="size-25">
+                    {{ form.title.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.title }}
+                </div>
             </div>
-            <div class="size-75">
-                {{ form.title }}
+            
+            <div class="row">
+                <div class="size-25">
+                    {{ form.content_type.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.content_type }}
+                </div>
             </div>
-        </div>
 
-        <div class="row">
-            <div class="size-25">
-                {{ form.content_type.label_tag}}
+            <div class="row">
+                <div class="size-25">
+                    {{ form.description.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.description }}
+                </div>
             </div>
-            <div class="size-75">
-                {{ form.content_type }}
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="size-25">
-                {{ form.description.label_tag}}
+            <div class="row">
+                {{ form.media }}
+                <div class="size-25">
+                    {{ form.content.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.content }}
+                </div>
             </div>
-            <div class="size-75">
-                {{ form.description }}
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="size-25">
-                {{ form.content.label_tag}}
+            <div class="row">
+                <div class="size-25">
+                    {{ form.image.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.image }}
+                </div>
             </div>
-            <div class="size-75">
-                {{ form.content }}
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="size-25">
-                {{ form.image_content.label_tag}}
-            </div>
-            <div class="size-75">
-                {{ form.image_content }}
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="size-25">
-                {{ form.categories.label_tag }} - In the form ["example", "xxx"]
-            </div>
-            <div class="size-75">
-                {{ form.categories }}
-            </div>
-        </div>
+            <div class="row">
+                <div class="size-25">
+                    {{ form.categories.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.categories }}
+                    
+                    <button onclick="enterTagFunction()" type="button">Enter Tag</button>
 
-        <div class="row">
-            <div class="size-25">
-                {{ form.visibility.label_tag }}
+                </div>
             </div>
-            <div class="size-75">
-                {{ form.visibility }}
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="size-25">
-                {{ form.recipient_uuid.label_tag }} - Only if Private to Author (DM)
-            </div>
-            <div class="size-75">
-                {{ form.recipient_uuid }}
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="size-25">
-                {{ form.unlisted.label_tag }}
-            </div>
-            <div class="size-75">
-                {{ form.unlisted }}
-            </div>
-        </div>
 
-        </br></br>
-        <a href="{% url 'bettersocial:index' %}"> <button>Update</button></a>
-    </form>
-</div>
+            <div class="row">
+                <div class="size-25">
+                    {{ form.visibility.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.visibility }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="size-25">
+                    {{ form.recipient_uuid.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.recipient_uuid }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="size-25">
+                    {{ form.unlisted.label_tag }}
+                </div>
+                <div class="size-75">
+                    {{ form.unlisted }}
+                </div>
+            </div>
+
+            <div class="row">
+                <input type="submit" class="button" value="Update Post"/>
+            </div>
+        </form>
+    </div>
 
 {% endblock %}

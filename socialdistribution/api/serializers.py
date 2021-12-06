@@ -70,6 +70,11 @@ class AuthorSerializer(serializers.ModelSerializer):
         }
 
 
+class FollowerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follower
+        fields = '__all__'
+
 class CommentSerializer(serializers.ModelSerializer):
     type = models.CharField(max_length = 32)
 

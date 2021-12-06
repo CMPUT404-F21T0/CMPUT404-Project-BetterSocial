@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'api',
     'django_extensions',
     'md.apps.MdConfig',
+    'markdownx',
 ]
 
 MIDDLEWARE = [

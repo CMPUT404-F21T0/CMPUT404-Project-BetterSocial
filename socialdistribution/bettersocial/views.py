@@ -4,7 +4,10 @@ import requests
 import yarl
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.contenttypes.models import ContentType as DjangoContentType
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseNotFound, HttpRequest, HttpResponseBadRequest
 from django.http.response import HttpResponseRedirect
@@ -17,7 +20,7 @@ from requests.auth import HTTPBasicAuth
 from api.helpers import author_helpers, uuid_helpers
 from api.serializers import PostSerializer, CommentSerializer, AuthorSerializer
 from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment, Node
-from .forms import CommentCreationForm, PostCreationForm
+from .forms import CommentCreationForm, PostCreationForm, EditProfileForm
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -41,7 +44,7 @@ class ArticleDetailView(generic.TemplateView):
 
         if post_qs.exists():
             post = post_qs.get()
-            comments = post.comments.order_by('-published')
+            comments = post.comments.order_by('-published').all()
 
             return PostSerializer(post, context = { 'request': self.request }).data, \
                    CommentSerializer(comments, context = { 'request': self.request }, many = True).data
@@ -74,7 +77,7 @@ class ArticleDetailView(generic.TemplateView):
                     comments_response.raise_for_status()
 
                     if post_response.ok:
-                        return post_response.json(), comments_response.json() if comments_response.ok else []
+                        return post_response.json(), comments_response.json()['comments'] if comments_response.ok else []
 
                 else:
                     return item.inbox_object
@@ -113,7 +116,7 @@ class ArticleDetailView(generic.TemplateView):
         # context["comments"] = (post.comments.all().exclude(author_uuid__in = friends_to_hide))
 
         context['post'] = json.dumps(post)
-        context['comments'] = json.dumps(comments['comments'])
+        context['comments'] = json.dumps(comments)
 
         return context
 
@@ -124,6 +127,14 @@ class UpdatePostView(generic.UpdateView):
     template_name = 'bettersocial/edit_post.html'
     form_class = PostCreationForm
 
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        post_qs = Post.objects.filter(uuid = self.kwargs['pk'])
+
+        if post_qs.exists() and post_qs.get().author.uuid != request.user.author.uuid:
+            raise PermissionDenied('You may not edit the post of another user!')
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         return reverse_lazy('bettersocial:article_details', kwargs = { 'pk': self.kwargs['pk'] })
 
@@ -133,6 +144,14 @@ class DeletePostView(generic.DeleteView):
     model = Post
     template_name = 'bettersocial/delete_post.html'
     success_url = reverse_lazy('bettersocial:index')
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        post_qs = Post.objects.filter(uuid = self.kwargs['pk'])
+
+        if post_qs.exists() and post_qs.get().author.uuid != request.user.author.uuid:
+            raise PermissionDenied('You may not delete the post of another user!')
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -151,15 +170,16 @@ class ProfileView(generic.base.TemplateView):
         user_uuid = self.request.user.author.uuid
 
         if author_uuid == user_uuid:
-            context['posts'] = author.post_set.all()
+            context['posts'] = author.post_set.all().order_by('-published')
+        else:
+            context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
+            context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
 
             # TODO: Might only need to have Public posts to be queried or publick and friends posts?
             context['posts'] = Post.objects.filter(
                 (Q(visibility = Post.Visibility.PUBLIC) & Q(author__uuid = author_uuid)) |
                 (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = user_uuid) & Q(author__following__following_uuid = user_uuid)) |
                 (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = user_uuid))).distinct().order_by('-published')
-        else:
-            context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
             if Author.objects.filter(uuid = user_uuid).exists():
                 context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
             else:
@@ -243,6 +263,11 @@ class AddPostView(generic.CreateView):
     model = Post
     form_class = PostCreationForm
     template_name = 'bettersocial/postapost.html'
+
+    def get_success_url(self):
+        if 'done' in self.request.POST:
+            url = reverse_lazy('bettersocial:index')
+        return url
 
     # Changes require in the future
     # The form itself has error message for the user if he / she does it incorrectly.
@@ -343,8 +368,7 @@ class InboxView(generic.ListView):
 
     def get_queryset(self):
         """Return all inbox items."""
-        content_type = DjangoContentType.objects.get_for_model(model = Follower)
-        return InboxItem.objects.filter(Q(dj_content_type = content_type))
+        return InboxItem.objects.filter(author = self.request.user.author)
 
 
 @method_decorator(login_required, name = 'dispatch')
@@ -516,3 +540,21 @@ class SharePostActionView(generic.View):
 
         shared_post.save()
         return HttpResponseRedirect(reverse('bettersocial:article_details', args = (shared_post.uuid,)))
+
+
+@method_decorator(login_required, name = 'dispatch')
+class EditProfileView(generic.UpdateView):
+    template_name = 'bettersocial/edit_profile.html'
+    form_class = EditProfileForm
+    success_url = reverse_lazy('bettersocial:index')
+
+    def get_object(self, **kwargs):
+        return self.request.user
+
+
+@method_decorator(login_required, name = 'dispatch')
+class PasswordsChangeView(SuccessMessageMixin, PasswordChangeView):
+    template_name = 'bettersocial/change_password.html'
+    form_class = PasswordChangeForm
+    success_url = reverse_lazy('bettersocial:index')
+    success_message = "Password changed was successful"

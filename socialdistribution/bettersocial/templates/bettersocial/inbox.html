@@ -1,16 +1,35 @@
-{% extends 'bettersocial/base.html' %} {% block content %} {% if object_list %}
-<div
-	class="inbox"
-	style="display: flex; flex-direction: column; overflow: hidden"
->
-	{% for inbox_object in object_list %}
-	<div class="inbox_obj">
-		<h1>Follower Request</h1>
-		<p>New follow request from {{inbox_object.author.display_name}}</p>
-	</div>
+{% extends 'bettersocial/base.html' %}
+{% block content %}
 
-	{% endfor %}
-</div>
-{% else %}
-<p>No items in inbox.</p>
-{% endif %} {% endblock %}
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/friends.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bettersocial/inbox.css' %}">
+
+    {% if inbox_items %}
+        <!-- TODO: Implement clearing inbox -->
+        <div class="flex-container" style="justify-content: center; margin-bottom: 1em;">
+            <input class="button" style="width: 20em;" id="refresh-button" type="button" onclick="clearInbox()"
+                   value="Clear Inbox">
+        </div>
+
+        <div class="inbox-container">
+            {% for item in inbox_items %}
+                <div class="inbox-item">
+                    {% if item.inbox_object.type|lower == 'follow' %}
+                        <h3>Follower Request</h3>
+                        <p>New follow request from {{ item.inbox_object.author.displayName }}</p>
+                    {% elif item.inbox_object.type|lower == 'post' %}
+                        <h3>New Post</h3>
+                        <p>New post from {{ item.inbox_object.author.displayName }} titled
+                            "{{ item.inbox_object.title }}"</p>
+                    {% elif item.inbox_object.type|lower == 'like' %}
+                        <h3>New Like</h3>
+                        <p>New like from {{ item.inbox_object.author.displayName }} on post</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No items in inbox.</p>
+    {% endif %}
+{% endblock %}
