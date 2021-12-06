@@ -1,4 +1,6 @@
 import json
+from typing import List
+from uuid import UUID
 
 import requests
 import yarl
@@ -291,6 +293,16 @@ class AddPostView(generic.CreateView):
             url = reverse_lazy('bettersocial:index')
         return url
 
+    def _send_post_to_authors(self, request, post: Post, author_uuids: List[UUID]):
+        return requests.post(
+            (yarl.URL(request._current_scheme_host) / 'api' / 'send-post' / '').human_repr(),
+            headers = { 'Accept': 'application/json' },
+            json = {
+                'post_uuid': str(post.uuid),
+                'author_uuids': [str(u) for u in author_uuids]
+            }
+        )
+
     # Changes require in the future
     # The form itself has error message for the user if he / she does it incorrectly.
     def post(self, request, **kwargs):
@@ -299,6 +311,18 @@ class AddPostView(generic.CreateView):
         obj = form.save(commit = False)
         obj.author = Author(self.request.user.author.uuid, self.request.user)  # Automatically Put the current user as the author
         obj.save()
+
+        # Could include unlisted
+        if obj.visibility == Post.Visibility.PRIVATE:
+            self._send_post_to_authors(request, obj, [obj.recipient_uuid])
+
+        elif obj.visibility == Post.Visibility.FRIENDS:
+            friends: List[UUID] = author_helpers.get_author_friends_as_uuid(obj.author)
+            self._send_post_to_authors(request, obj, friends)
+
+        elif obj.visibility == Post.Visibility.PUBLIC:
+            followers: List[UUID] = [f.follower_uuid for f in obj.author.follower_set.all()]
+            self._send_post_to_authors(request, obj, followers)
 
         return redirect('bettersocial:index')
 

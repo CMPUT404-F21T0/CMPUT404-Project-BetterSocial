@@ -200,7 +200,8 @@ class Post(Likeable):
         return Post.Visibility[self.visibility]
 
     def __str__(self):
-        return self.title + ' | ' + str(self.author.user)
+        # Had some issues
+        return self.title  # + ' | ' + str(self.author.github_url)
 
 
 class Comment(Likeable, LocalAuthorMixin):

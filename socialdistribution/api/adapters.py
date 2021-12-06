@@ -3,7 +3,6 @@ from uuid import UUID
 
 import requests
 from requests.auth import HTTPBasicAuth
-from rest_framework.request import Request
 from yarl import URL
 
 
@@ -16,8 +15,12 @@ class BaseAdapter:
         self.session = requests.session()
         self.session.headers['Accept'] = 'application/json'
 
-    def post_inbox_item(self, request: Request, *args, **kwargs) -> Request:
-        return request
+    def send_to_inbox(self, node, author_uuid: Union[str, UUID], post_json: Dict, *args, **kwargs) -> requests.Response:
+        return self.session.post(
+            self.get_inbox_url(node, author_uuid),
+            auth = HTTPBasicAuth(node.node_username, node.node_password),
+            json = post_json
+        )
 
     def get_author(self, node, author_uuid: Union[str, UUID], *args, **kwargs) -> requests.Response:
         return self.session.get(

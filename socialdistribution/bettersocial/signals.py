@@ -12,11 +12,11 @@ def create_user_author(sender, instance, created, **kwargs):
     if created:
         Author.objects.create(user = instance)
 
+
 # https://newbedev.com/create-user-inactive-as-default-is-active-default-false
 
-@receiver(pre_save, sender=User)
+@receiver(signal = pre_save, sender = User)
 def user_to_inactive(sender, instance, **kwargs):
     if instance._state.adding is True:
         print("Creating Inactive User")
         instance.is_active = False
-        
