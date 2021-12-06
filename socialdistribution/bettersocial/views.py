@@ -617,7 +617,7 @@ class SharePostActionView(generic.View):
             title = original_post.title,
             content = original_post.content,
             description = original_post.description,
-            image_content = original_post.image_content,
+            # image_content = original_post.image_content,
             categories = original_post.categories,
             visibility = visibility,
         )
