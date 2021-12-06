@@ -1,4 +1,5 @@
 import json
+from typing import List, Tuple
 
 import requests
 import yarl
@@ -17,7 +18,7 @@ from django.utils.decorators import method_decorator
 from django.views import generic
 from requests.auth import HTTPBasicAuth
 
-from api.helpers import author_helpers, uuid_helpers
+from api.helpers import author_helpers, uuid_helpers, remote_helpers
 from api.serializers import PostSerializer, CommentSerializer, AuthorSerializer
 from bettersocial.models import Author, Follower, Following, InboxItem, Post, Comment, Node
 from .forms import CommentCreationForm, PostCreationForm, EditProfileForm
@@ -385,12 +386,34 @@ class FollowersView(generic.TemplateView):
 
             friend_request_list.append(inbox_item.inbox_object)
 
+        # Start with local authors. Forgive my long ass code, no time to make sexy
+        author_nodes: List[Tuple[str, Tuple[str, dict, bool]]] = [(
+            'Local Authors',
+            [
+                (author_json, uuid_helpers.extract_author_uuid_from_id(author_json['id']), Following.objects.filter(following_uuid = uuid_helpers.extract_author_uuid_from_id(author_json['id'])).exists())
+                for author_json in AuthorSerializer(Author.objects.exclude(uuid = self.request.user.author.uuid).all(), many = True, context = { 'request': self.request }).data
+            ]
+        )]
+
+        # For every node, add all of its authors in the same fashion as above, using its display name as the key
+        for node in Node.objects.all():
+            author_nodes.append((
+                node.display_name,
+                [
+                    (author_json, uuid_helpers.extract_author_uuid_from_id(author_json['id']), Following.objects.filter(following_uuid = uuid_helpers.extract_author_uuid_from_id(author_json['id'])).exists())
+                    for author_json in remote_helpers.get_all_authors(node)
+                ]
+            ))
+
         context['friend_request_list'] = [
             (follow_json['actor'], uuid_helpers.extract_author_uuid_from_id(follow_json['actor']['id'])) for follow_json in friend_request_list
         ]
+
         context['friends_list'] = [
             (author_json, uuid_helpers.extract_author_uuid_from_id(author_json['id'])) for author_json in friends_list
         ]
+
+        context['author_nodes'] = author_nodes
 
         return context
 

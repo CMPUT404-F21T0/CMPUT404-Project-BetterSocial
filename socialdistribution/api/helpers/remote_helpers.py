@@ -1,5 +1,5 @@
 from sys import stderr
-from typing import Optional, Union, Dict
+from typing import Optional, Union, Dict, List
 from uuid import UUID
 
 from bettersocial.models import UUIDRemoteCache, Node
@@ -115,3 +115,17 @@ def approved_follow(remote_uuid: Union[str, UUID], author_uuid: Union[str, UUID]
                         return True
 
     return False
+
+
+def get_all_authors(node: Node) -> List[Dict]:
+    response = node.adapter.get_authors(node)
+
+    print(f'\nGET /authors -- response from node {node.host}:')
+    print(response)
+    print(response.json() if response.status_code == 200 else None)
+    print(response.request.url)
+
+    if response.status_code == 200:
+        return response.json()['items']
+
+    return list()

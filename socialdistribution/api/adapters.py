@@ -25,11 +25,22 @@ class BaseAdapter:
             auth = HTTPBasicAuth(node.node_username, node.node_password)
         )
 
+    def get_authors(self, node, *args, **kwargs) -> requests.Response:
+        return self.session.get(
+            self.get_authors_url(node),
+            params = { 'size': 1000 },
+            headers = { 'Accept': 'application/json' },
+            auth = HTTPBasicAuth(node.node_username, node.node_password)
+        )
+
     def get_author_url(self, node, author_uuid: Union[str, UUID], *args, **kwargs) -> str:
         if isinstance(author_uuid, UUID):
             author_uuid = str(author_uuid)
 
         return (URL(node.host) / node.prefix / 'author' / author_uuid / '').human_repr()
+
+    def get_authors_url(self, node, *args, **kwargs) -> str:
+        return (URL(node.host) / node.prefix / 'authors' / '').human_repr()
 
     def get_followers(self, node, author_uuid: Union[str, UUID], *args, **kwargs):
         if isinstance(author_uuid, UUID):
