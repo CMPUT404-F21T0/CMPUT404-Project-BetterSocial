@@ -164,22 +164,44 @@ class ProfileView(generic.base.TemplateView):
         context = super(ProfileView, self).get_context_data(**kwargs)
         # author is the owner of the page we're looking at
         # user is the logged in user
-        author_uuid = self.kwargs['uuid']
-        author = Author.objects.filter(uuid = author_uuid).prefetch_related('post_set').get()
-        context['author'] = author
+        author_uuid = context['uuid']
         user_uuid = self.request.user.author.uuid
 
-        if author_uuid == user_uuid:
-            context['posts'] = author.post_set.all().order_by('-published')
-        else:
-            context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
-            context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
+        author_qs = Author.objects.filter(uuid = author_uuid)
+        if author_qs.exists():
+            context['author'] = AuthorSerializer(author_qs.get(), context = { 'request': self.request }).data
 
             # TODO: Might only need to have Public posts to be queried or publick and friends posts?
             context['posts'] = Post.objects.filter(
                 (Q(visibility = Post.Visibility.PUBLIC) & Q(author__uuid = author_uuid)) |
                 (Q(visibility = Post.Visibility.FRIENDS) & Q(author__follower__follower_uuid = user_uuid) & Q(author__following__following_uuid = user_uuid)) |
                 (Q(visibility = Post.Visibility.PRIVATE) & Q(recipient_uuid = user_uuid))).distinct().order_by('-published')
+        else:
+            context['author'] = remote_helpers.find_remote_author(author_uuid)
+
+            # get authors posts
+            node = remote_helpers.get_node_of_uuid(author_uuid)
+
+            url = (yarl.URL(node.host) / node.prefix / 'author' / str(author_uuid) / '').human_repr()
+            author_posts_resp = requests.get(
+                url,
+                headers = { 'Accept': 'application/json' },
+                auth = HTTPBasicAuth(node.node_username, node.node_password)  # Shouldn't need but in case
+            )
+
+            author_posts_resp.raise_for_status()
+
+            if author_posts_resp.ok:
+                context['posts'] = author_posts_resp.json()
+        context['author']['uuid'] = author_uuid
+
+        # Get follow button actions
+        if author_uuid == user_uuid:
+            author = Author.objects.filter(uuid = author_uuid).prefetch_related('post_set').get()
+            context['posts'] = author.post_set.all().order_by('-published')
+        else:
+            context['author_following_user'] = bool(Following.objects.filter(author = author_uuid, following_uuid = user_uuid))
+            context['user_following_author'] = bool(Following.objects.filter(author = user_uuid, following_uuid = author_uuid))
 
         return context
 
@@ -187,6 +209,20 @@ class ProfileView(generic.base.TemplateView):
 # CODE REFERENCED: https://stackoverflow.com/questions/54187625/django-on-button-click-call-function-view
 @method_decorator(login_required, name = 'dispatch')
 class ProfileActionView(generic.View):
+    def get(self, request, *args, **kwargs):
+        try:
+            location = self.request.GET['location']
+            host = self.request.GET['host']
+
+            # JavaScript moment
+            if location == 'undefined' or host == 'undefined':
+                return HttpResponseBadRequest('both query parameters must be defined!')
+
+        except KeyError:
+            return HttpResponseBadRequest('you must the location and host query parameters in the request!')
+
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, uuid, action, *args, **kwargs):
         author = Author.objects.filter(uuid = request.user.author.uuid).get()
         if action == 'follow':
@@ -195,6 +231,60 @@ class ProfileActionView(generic.View):
         elif action == 'unfollow':
             Following.objects.filter(following_uuid = uuid, author = author).delete()
             Follower.objects.filter(follower_uuid = author.uuid, author_id = uuid).delete()
+
+        # If target user is not local, need to send api request for follow req + unfollow
+        if not Author.objects.filter(uuid = uuid).exists():
+            node = remote_helpers.get_node_of_uuid(uuid)
+            if action == 'follow':
+                author_serialized = AuthorSerializer(author, context = { 'request': self.request }).data
+                remote_author = remote_helpers.find_remote_author(uuid)
+                follower_json = {
+                    'type': 'Follow',
+                    'summary': f'{author_serialized.displayName} wants to follow user at {uuid}',
+                    'actor': {
+                        'type': 'author',
+                        'id': author_serialized.id,
+                        'url': author_serialized.url,
+                        'host': author_serialized.host,
+                        'displayName': author_serialized.displayName,
+                        'github': '',
+                        'profileImage': ''
+                    },
+                    'object': {
+                        'type': 'author',
+                        'id': remote_author['id'],
+                        'url': remote_author['url'],
+                        'host': remote_author['host'],
+                        'displayName': remote_author['displayName'],
+                        'github': remote_author['github'],
+                        'profileImage': remote_author['profileimage']
+                    }
+                }
+
+                # TODO: need foreign author uuid with remote host url
+                url = (yarl.URL(node.host) / node.prefix / 'author' / str(author.uuid) / 'inbox' / '').human_repr()
+                response = requests.post(
+                    url,
+                    headers = { 'Accept': 'application/json' },
+                    auth = HTTPBasicAuth(node.node_username, node.node_password),
+                    json = follower_json
+                )
+
+                response.raise_for_status()
+
+                if response.ok:
+                    print(response.content)
+            if action == 'unfollow':
+                url = (yarl.URL(node.host) / node.prefix / 'author' / uuid / 'followers' / str(author.uuid) / '').human_repr()
+                response = requests.delete(
+                    url,
+                    headers = { 'Accept': 'application/json' },
+                )
+
+                response.raise_for_status()
+                if response.ok:
+                    print(response.content)
+
         return HttpResponseRedirect(reverse('bettersocial:profile', args = (uuid,)))
 
 

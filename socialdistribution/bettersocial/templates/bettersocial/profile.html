@@ -14,14 +14,10 @@
             </div>
 
             <div class="profile-info">
-                <h1> {{ author.display_name }}</h1>
-                <p>{{ author.user.username }}</p>
-                {% if author.user.email %}
-                    <p> Email: {{ author.user.email }}</p>
-                {% endif %}
+                <h1> {{ author.displayName }}</h1>
 
-                {% if author.github_url %}
-                    <p>Github: <a href="{{ author.github_url }}">{{ author.github_url }}</a></p>
+                {% if author.github %}
+                    <p>Github: <a href="{{ author.github }}">{{ author.github }}</a></p>
                 {% endif %}
                 <!-- <p>Bio: This is a John Doe's bio</p> -->
             </div>
@@ -56,8 +52,8 @@
                     </form>
                 {% endif %}
 
-                {% if author.github_url %}
-                    <script> var git = "{{ author.github_url }}" </script>
+                {% if author.github %}
+                    <script> var git = "{{ author.github }}" </script>
                     <button onclick="showGitActivity(git)">Github Activity</button>
                 {% endif %}
             </div>
