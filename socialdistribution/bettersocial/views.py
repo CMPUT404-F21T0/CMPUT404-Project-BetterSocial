@@ -161,16 +161,16 @@ class ProfileView(generic.base.TemplateView):
     context_object_name = "current_user"
 
     def get(self, request, *args, **kwargs):
-        try:
-            location = self.request.GET['location']
-            host = self.request.GET['host']
+        # try:
+        #     location = self.request.GET['location']
+        #     host = self.request.GET['host']
 
-            # JavaScript moment
-            if location == 'undefined' or host == 'undefined':
-                return HttpResponseBadRequest('both query parameters must be defined!')
+        #     # JavaScript moment
+        #     if location == 'undefined' or host == 'undefined':
+        #         return HttpResponseBadRequest('both query parameters must be defined!')
 
-        except KeyError:
-            return HttpResponseBadRequest('you must the location and host query parameters in the request!')
+        # except KeyError:
+        #     return HttpResponseBadRequest('you must the location and host query parameters in the request!')
 
         return super().get(request, *args, **kwargs)
 
@@ -224,7 +224,6 @@ class ProfileView(generic.base.TemplateView):
 @method_decorator(login_required, name = 'dispatch')
 class ProfileActionView(generic.View):
     def post(self, request, uuid, action, *args, **kwargs):
-        import pdb; pdb.set_trace()
         author = Author.objects.filter(uuid = request.user.author.uuid).get()
         if action == 'follow':
             Following.objects.create(following_uuid = uuid, author = author)
