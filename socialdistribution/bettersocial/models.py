@@ -304,6 +304,8 @@ class Node(AbstractBaseUser):
 
     host = models.CharField(max_length = 255, unique = True)
 
+    display_name = models.CharField(max_length = 127, blank = True)
+
     # prefix between the host and the api endpoints. Example http://myhost.com/service/my/api/call, where "service" is the prefix.
     prefix = models.CharField(max_length = 32, default = 'service', blank = True)
 
