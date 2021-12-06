@@ -84,21 +84,39 @@ class BaseAdapter:
 
         return (URL(node.host) / node.prefix / 'author' / author_uuid / 'inbox' / '').human_repr()
 
-
     def remove_follower(self, node, author_uuid: Union[str, UUID], user_uuid: Union[str, UUID], *args, **kwargs):
         return self.session.delete(
             self.get_follower_url(node, author_uuid, user_uuid),
             auth = HTTPBasicAuth(node.node_username, node.node_password)
         )
-    
+
     def get_follower_url(self, node, author_uuid: Union[str, UUID], user_uuid: Union[str, UUID], *args, **kwargs) -> str:
         if isinstance(author_uuid, UUID):
             author_uuid = str(author_uuid)
-        
+
         if isinstance(user_uuid, UUID):
             user_uuid = str(user_uuid)
 
         return (URL(node.host) / node.prefix / 'author' / author_uuid / 'follower' / user_uuid / '').human_repr()
+
+    def get_posts(self, node, author_uuid: Union[str, UUID], *args, **kwargs):
+        if isinstance(author_uuid, UUID):
+            author_uuid = str(author_uuid)
+
+        return requests.get(
+            self.get_posts_url(node, author_uuid, include_slash = True),
+            headers = { 'Accept': 'application/json' },
+            auth = HTTPBasicAuth(node.node_username, node.node_password)  # Shouldn't need but in case
+        )
+
+    def get_posts_url(self, node, author_uuid: Union[str, UUID], *args, **kwargs):
+        url = URL(node.host) / node.prefix / 'author' / str(author_uuid) / 'posts'
+
+        if kwargs.get('include_slash') and kwargs['include_slash'] == True:
+            url /= ''
+
+        return url.human_repr()
+
 
 class Team1Adapter(BaseAdapter):
     pass
@@ -106,7 +124,7 @@ class Team1Adapter(BaseAdapter):
 
 class Team4Adapter(BaseAdapter):
     def get_author_url(self, node, author_uuid: Union[str, UUID], *args, **kwargs) -> str:
-        
+
         if isinstance(author_uuid, UUID):
             author_uuid = str(author_uuid)
 
@@ -121,18 +139,20 @@ class Team4Adapter(BaseAdapter):
     def get_follower_url(self, node, author_uuid: Union[str, UUID], user_uuid: Union[str, UUID], *args, **kwargs) -> str:
         if isinstance(author_uuid, UUID):
             author_uuid = str(author_uuid)
-        
+
         if isinstance(user_uuid, UUID):
             user_uuid = str(user_uuid)
 
         return (URL(node.host) / node.prefix / 'author' / author_uuid / 'follower' / user_uuid).human_repr()
 
-    def get_inbox_url(node, author_uuid: Union[str, UUID], *args, **kwargs):
+    def get_inbox_url(self, node, author_uuid: Union[str, UUID], *args, **kwargs):
         if isinstance(author_uuid, UUID):
             author_uuid = str(author_uuid)
 
         return (URL(node.host) / node.prefix / 'author' / author_uuid / 'inbox').human_repr()
 
+    def get_posts_url(self, node, author_uuid: Union[str, UUID], *args, **kwargs):
+        return super().get_posts_url(node, author_uuid, *args, include_slash = False)
 
 
 class Team7Adapter(BaseAdapter):
